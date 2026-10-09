@@ -51,7 +51,7 @@ cd weread-bookshelf
 # 一键生成（默认输出到当前目录）
 .\scripts\update.ps1
 
-# 或指定输出目录
+# 或指定输出目录（会自动删除默认目录的旧页面）
 .\scripts\update.ps1 -OutputDir "D:\我的书架"
 ```
 

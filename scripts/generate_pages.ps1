@@ -23,6 +23,18 @@ if ($OutputDir) {
 }
 Write-Host "输出目录: $outputDir"
 
+# 如果指定了其他输出目录，删除默认目录下的旧页面，避免重复
+if ($outputDir.Path -ne $skillDir) {
+    $oldFiles = @("我的书架-浅色版.html", "砖墙-便利贴.html")
+    foreach ($f in $oldFiles) {
+        $oldPath = Join-Path $skillDir $f
+        if (Test-Path $oldPath) {
+            Remove-Item $oldPath -Force
+            Write-Host "已删除默认目录旧页面: $f"
+        }
+    }
+}
+
 # 辅助函数：PSObject 转 Hashtable（兼容 PowerShell 5.1）
 function ConvertTo-Hashtable {
     param($InputObject)
