@@ -17,14 +17,14 @@ if ($OutputDir) {
     if (-not (Test-Path $OutputDir)) {
         New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
     }
-    $outputDir = Resolve-Path $OutputDir
+    $targetDir = (Resolve-Path $OutputDir).Path
 } else {
-    $outputDir = $skillDir
+    $targetDir = $skillDir
 }
-Write-Host "输出目录: $outputDir"
+Write-Host "输出目录: $targetDir"
 
 # 如果指定了其他输出目录，删除默认目录下的旧页面，避免重复
-if ($outputDir.Path -ne $skillDir) {
+if ($OutputDir -and ($targetDir -ne $skillDir)) {
     $oldFiles = @("我的书架-浅色版.html", "砖墙-便利贴.html")
     foreach ($f in $oldFiles) {
         $oldPath = Join-Path $skillDir $f
@@ -112,7 +112,7 @@ $bookshelfTemplate = $bookshelfTemplate.Replace('{{HEATMAP_DAYS}}', $daysInMonth
 $bookshelfTemplate = $bookshelfTemplate.Replace('{{CATEGORY_DATA}}', $prefsStr)
 $bookshelfTemplate = $bookshelfTemplate.Replace('{{RECOMMEND_DATA}}', $recStr)
 
-$bookshelfOutput = Join-Path $outputDir "我的书架-浅色版.html"
+$bookshelfOutput = Join-Path $targetDir "我的书架-浅色版.html"
 $bookshelfTemplate | Out-File $bookshelfOutput -Encoding UTF8
 Write-Host "书架页面已生成: $bookshelfOutput"
 
@@ -133,7 +133,7 @@ $stickyTemplate = $stickyTemplate.Replace('{{COVERS_DATA}}', $coversStr)
 $stickyTemplate = $stickyTemplate.Replace('{{CHAPTER_PROGRESS_DATA}}', $cpStr)
 $stickyTemplate = $stickyTemplate.Replace('{{NOTES_DATA}}', $notesStr)
 
-$stickyOutput = Join-Path $outputDir "砖墙-便利贴.html"
+$stickyOutput = Join-Path $targetDir "砖墙-便利贴.html"
 $stickyTemplate | Out-File $stickyOutput -Encoding UTF8
 Write-Host "便利贴页面已生成: $stickyOutput"
 
