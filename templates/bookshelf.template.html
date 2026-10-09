@@ -1162,13 +1162,14 @@
 
     .rec-card {
       position: relative;
-      width: 208px;
-      height: 288px;
+      width: 140px;
+      height: 200px;
       flex-shrink: 0;
-      border-radius: 20px;
-      overflow: visible;
+      border-radius: 15px;
+      overflow: hidden;
       box-shadow: 0 14px 40px -22px rgba(70, 50, 30, 0.22);
       transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.3, 1), box-shadow 0.45s;
+      cursor: pointer;
     }
 
     .rec-card:hover {
@@ -1180,7 +1181,7 @@
     .rec-cover {
       width: 100%;
       height: 100%;
-      border-radius: 20px;
+      border-radius: 15px;
       overflow: hidden;
       background: linear-gradient(135deg, #d9cdb5, #c2b08c);
     }
@@ -1193,30 +1194,137 @@
       display: block;
     }
 
-    .rec-panel {
-      position: absolute;
+    /* 猜你喜欢弹窗 */
+    .rec-modal-overlay {
+      position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: #fdfaf3;
-      border-radius: 20px;
-      padding: 18px 16px;
-      box-sizing: border-box;
-      transform: translateY(100%);
+      background: rgba(40, 30, 20, 0.5);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
       opacity: 0;
       pointer-events: none;
-      transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.3, 1), opacity 0.3s ease;
-      box-shadow: 0 20px 40px -20px rgba(70, 50, 30, 0.3);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
+      transition: opacity 0.3s ease;
     }
 
-    .rec-card:hover .rec-panel {
-      transform: translateY(0);
+    .rec-modal-overlay.active {
       opacity: 1;
       pointer-events: auto;
+    }
+
+    .rec-modal {
+      background: #fdfaf3;
+      border-radius: 20px;
+      width: 560px;
+      max-width: 90vw;
+      max-height: 80vh;
+      overflow: hidden;
+      box-shadow: 0 40px 80px -20px rgba(0, 0, 0, 0.4);
+      transform: translateY(20px) scale(0.95);
+      transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.3, 1);
+    }
+
+    .rec-modal-overlay.active .rec-modal {
+      transform: translateY(0) scale(1);
+    }
+
+    .rec-modal-header {
+      display: flex;
+      gap: 20px;
+      padding: 26px 26px 20px;
+      align-items: flex-start;
+    }
+
+    .rec-modal-cover {
+      width: 100px;
+      height: 140px;
+      flex-shrink: 0;
+      border-radius: 10px;
+      overflow: hidden;
+      background: linear-gradient(135deg, #d9cdb5, #c2b08c);
+      box-shadow: 0 8px 20px -8px rgba(70, 50, 30, 0.3);
+    }
+
+    .rec-modal-cover img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top;
+      display: block;
+    }
+
+    .rec-modal-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .rec-modal-close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(90, 72, 50, 0.08);
+      color: var(--text-secondary);
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+
+    .rec-modal-close:hover {
+      background: rgba(90, 72, 50, 0.15);
+    }
+
+    .rec-modal-cat {
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      color: var(--accent-gold);
+      border: 1px solid rgba(200, 155, 90, 0.35);
+      border-radius: 99px;
+      padding: 3px 10px;
+      display: inline-block;
+      margin-bottom: 10px;
+    }
+
+    .rec-modal-title {
+      font-family: 'Noto Serif SC', 'Songti SC', serif;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      line-height: 1.4;
+      color: var(--text-primary);
+      margin: 10px 0;
+    }
+
+    .rec-modal-author {
+      font-size: 13px;
+      color: var(--text-tertiary);
+      letter-spacing: 0.08em;
+    }
+
+    .rec-modal-intro-wrap {
+      padding: 0 26px 26px;
+      max-height: 40vh;
+      overflow-y: auto;
+      border-top: 1px solid rgba(90, 72, 50, 0.1);
+      padding-top: 18px;
+    }
+
+    .rec-modal-intro {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.9;
+      margin: 0;
     }
 
     .rec-cat {
@@ -1252,10 +1360,6 @@
       line-height: 1.7;
       margin-top: 7px;
       margin-bottom: 0;
-      display: -webkit-box;
-      -webkit-line-clamp: 4;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
     }
 
     /* 页脚 */
@@ -1572,7 +1676,7 @@
     }
   
     /* 小猫萌宠 */
-.pet-track{position:fixed !important;left:0;right:0;top:30%;height:112px;pointer-events:none;z-index:9999 !important}
+.pet-track{position:fixed !important;left:0;right:0;top:30%;height:112px;pointer-events:none;z-index:10000 !important}
 .pet{
   position:absolute;bottom:0;left:0;width:112px;height:auto;
   pointer-events:auto;cursor:pointer;transform-origin:bottom center;will-change:transform;
@@ -2390,23 +2494,52 @@
       const scroll = document.getElementById('recScroll');
       if (!scroll) return;
       let cardsHTML = '';
-      recBooks.forEach(book => {
+      recBooks.forEach((book, index) => {
         cardsHTML += `
-          <div class="rec-card">
+          <div class="rec-card" data-index="${index}">
             <div class="rec-cover">
               <img src="${book.cover}" alt="${book.title}" loading="lazy">
-            </div>
-            <div class="rec-panel">
-              <span class="rec-cat">${book.category}</span>
-              <div class="rec-title">${book.title}</div>
-              <div class="rec-author">${book.author}</div>
-              <p class="rec-intro">${book.intro}</p>
             </div>
           </div>
         `;
       });
       // 复制一份实现无缝滚动
       scroll.innerHTML = `<div class="rec-track">${cardsHTML}${cardsHTML}</div>`;
+
+      // 点击卡片打开弹窗
+      scroll.querySelectorAll('.rec-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const idx = parseInt(card.dataset.index);
+          openRecModal(recBooks[idx]);
+        });
+      });
+    }
+
+    // 弹窗功能
+    function openRecModal(book) {
+      const overlay = document.getElementById('recModalOverlay');
+      if (!overlay) return;
+      document.getElementById('recModalCover').src = book.cover;
+      document.getElementById('recModalCover').alt = book.title;
+      document.getElementById('recModalCat').textContent = book.category;
+      document.getElementById('recModalTitle').textContent = book.title;
+      document.getElementById('recModalAuthor').textContent = book.author;
+      document.getElementById('recModalIntro').textContent = book.intro;
+      overlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
+      // 暂停滚动动画
+      const track = document.querySelector('.rec-track');
+      if (track) track.style.animationPlayState = 'paused';
+    }
+
+    function closeRecModal() {
+      const overlay = document.getElementById('recModalOverlay');
+      if (!overlay) return;
+      overlay.classList.remove('active');
+      document.body.style.overflow = '';
+      // 恢复滚动动画
+      const track = document.querySelector('.rec-track');
+      if (track) track.style.animationPlayState = '';
     }
 
     renderRecommend();
@@ -2505,6 +2638,26 @@
   });
 })();
 </script>
+
+<!-- 猜你喜欢弹窗 -->
+<div class="rec-modal-overlay" id="recModalOverlay" onclick="if(event.target===this)closeRecModal()">
+  <div class="rec-modal" style="position:relative;">
+    <button class="rec-modal-close" onclick="closeRecModal()">×</button>
+    <div class="rec-modal-header">
+      <div class="rec-modal-cover">
+        <img id="recModalCover" src="" alt="">
+      </div>
+      <div class="rec-modal-info">
+        <span class="rec-modal-cat" id="recModalCat"></span>
+        <div class="rec-modal-title" id="recModalTitle"></div>
+        <div class="rec-modal-author" id="recModalAuthor"></div>
+      </div>
+    </div>
+    <div class="rec-modal-intro-wrap">
+      <p class="rec-modal-intro" id="recModalIntro"></p>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
