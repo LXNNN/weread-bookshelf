@@ -1,0 +1,17 @@
+# 私密数据（包含个人阅读记录、笔记、封面）
+data/
+
+# 生成的 HTML 页面（包含个人数据，仅忽略根目录）
+/*.html
+
+# 日志文件
+*.log
+update_log.txt
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 临时文件
+*.tmp
+*.temp
