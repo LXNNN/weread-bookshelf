@@ -22,7 +22,8 @@
 
 ## 🖼️ 截图
 
-> 在此处添加截图
+<img width="2160" height="1187" alt="image" src="https://github.com/user-attachments/assets/d30ee766-dc58-4541-8059-e6db995a52bc" />
+<img width="2160" height="1187" alt="image" src="https://github.com/user-attachments/assets/f8f827b2-04c2-4d08-87bc-12751c925dea" />
 
 ## 🚀 快速开始
 
