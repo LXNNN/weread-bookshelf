@@ -13,7 +13,7 @@ $outputPath = Join-Path $dataDir "covers_base64.json"
 
 if (-not (Test-Path $shelfPath)) {
     Write-Host "错误: 找不到 $shelfPath，请先运行 fetch_data.ps1" -ForegroundColor Red
-    exit 1
+    throw "找不到 $shelfPath，请先运行 fetch_data.ps1"
 }
 
 $shelfBooks = Get-Content $shelfPath -Raw -Encoding UTF8 | ConvertFrom-Json

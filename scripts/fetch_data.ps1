@@ -16,7 +16,7 @@ if (-not $apiKey) {
 if (-not $apiKey) {
     Write-Host "错误: 未设置环境变量 WEREAD_API_KEY" -ForegroundColor Red
     Write-Host "请运行: [Environment]::SetEnvironmentVariable('WEREAD_API_KEY', 'wrk-你的key', 'User')"
-    exit 1
+    throw "未设置环境变量 WEREAD_API_KEY"
 }
 
 $headers = @{

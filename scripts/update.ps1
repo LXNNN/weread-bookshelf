@@ -28,15 +28,12 @@ Write-Host "========================================" -ForegroundColor Cyan
 try {
     Write-Host "`n[1/3] 获取微信读书数据..." -ForegroundColor Yellow
     & (Join-Path $scriptDir "fetch_data.ps1")
-    if ($LASTEXITCODE -ne 0) { throw "数据获取失败" }
 
     Write-Host "`n[2/3] 下载书籍封面..." -ForegroundColor Yellow
     & (Join-Path $scriptDir "download_covers.ps1")
-    if ($LASTEXITCODE -ne 0) { throw "封面下载失败" }
 
     Write-Host "`n[3/3] 生成 HTML 页面..." -ForegroundColor Yellow
     & (Join-Path $scriptDir "generate_pages.ps1") -OutputDir $outputDir
-    if ($LASTEXITCODE -ne 0) { throw "页面生成失败" }
 
     Write-Host "`n========================================" -ForegroundColor Green
     Write-Host "  更新完成！" -ForegroundColor Green
