@@ -1,6 +1,6 @@
 ---
 name: weread-bookshelf
-description: 微信读书书架可视化 — 生成个人书架展示页面和划线句子便利贴墙，支持手动/定时自动更新数据，离线可用
+description: 当用户要求打开或看看我的书架、打开便利贴墙、更新/刷新/同步微信读书数据、生成或初始化书架页面、把页面输出到指定目录、设置或管理每日定时更新时使用。将微信读书数据生成为本地离线 HTML 书架与划线便利贴页面
 version: 1.0.0
 ---
 
@@ -45,7 +45,7 @@ version: 1.0.0
 
 ### 注册定时自动更新（每天早上 6:00）
 ```powershell
-.\scripts\setup_task.ps1 -Action register
+.\scripts\setup_task.ps1 -TaskAction register
 ```
 
 ### 管理定时任务
