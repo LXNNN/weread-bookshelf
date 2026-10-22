@@ -1,22 +1,24 @@
 # WeRead Bookshelf — 微信读书书架可视化
 
-将你的微信读书数据生成为精美的本地 HTML 页面，离线可用。
+把微信读书数据生成为两个可直接打开的本地 HTML 页面，离线可用。
 
 ## ✨ 功能特点
 
 ### 📚 我的书架页面
-- 扇形封面流（Coverflow 效果），按微信读书书架顺序排列
+- 扇形封面流（Coverflow 效果）
 - 阅读热力图（本月每日阅读时长）
 - 阅读进度排行榜
 - 阅读偏好分类（环形图）
 - 最近划线展示
 - 猜你喜欢（个性化推荐）
-- 小猫萌宠动画（走路、睡觉、玩球）
+- 总阅读时长、阅读天数、已读完数量
+- 小猫萌宠动画
 
-### 📝 砖墙便利贴页面
+### 📝 砖 · 句子便利贴页面
 - 所有划线和想法做成便利贴墙
-- 莫兰迪配色，不规则排列
-- 支持搜索（按书名或句子）
+- 高饱和配色，紧凑瀑布流，多种便利贴形状、图钉、胶带与纸张纹理
+- 可切换莫兰迪 / 高饱和主题（默认高饱和，选择会记住）
+- 支持搜索（书名、作者或句子）
 - 点击便利贴查看详情（书籍封面、章节、进度、划线日期）
 - 小猫萌宠动画
 
@@ -29,68 +31,86 @@
 
 ### 1. 前置条件
 
-- Windows 系统（PowerShell 5.1+）
-- 微信读书 API Key
+只需要：
+
+- 微信读书 API Key（环境变量 `WEREAD_API_KEY`）
+- 网络
+
+**不需要安装 Node.js、npm、Python、PowerShell 脚本、`weread-skills` 或本地服务器。**
 
 ### 2. 配置 API Key
 
-打开 PowerShell，运行：
+Windows（命令提示符）：
 
-```powershell
-[Environment]::SetEnvironmentVariable("WEREAD_API_KEY", "wrk-你的APIKey", "User")
+```bat
+setx WEREAD_API_KEY "wrk-你的APIKey"
 ```
 
-设置后重启终端生效。
+macOS / Linux：把下面一行写进 `~/.bashrc` 或 `~/.zshrc`：
 
-### 3. 生成页面
-
-```powershell
-# 进入 skill 目录
-cd weread-bookshelf
-
-# 一键生成（默认输出到当前目录）
-.\scripts\update.ps1
-
-# 或指定输出目录（会自动删除默认目录的旧页面）
-.\scripts\update.ps1 -OutputDir "D:\我的书架"
+```bash
+export WEREAD_API_KEY="wrk-你的APIKey"
 ```
 
-自动完成：获取书架数据 → 下载封面 → 获取笔记 → 生成页面 → 打开浏览器。
+设置后重开终端生效。不要把 key 写进仓库或发到聊天中。
 
-## ⚙️ 定时自动更新
+### 3. 使用
 
-注册每天早上 6:00 自动更新：
+在 agent 对话中直接说：
 
-```powershell
-.\scripts\setup_task.ps1 -TaskAction register
+> 打开书架
+
+agent 会：
+
+1. 调用微信读书 API 获取最新数据
+2. 下载缺失的封面到 `data/covers/`
+3. 写入 `data/weread-data.js`
+4. 打开 `我的书架-浅色版.html`
+
+说 **“打开便利贴”** 会更新数据并打开便利贴页面。  
+说 **“只打开书架，不更新”** 则直接打开现有页面。
+
+## 🧩 它是怎么工作的
+
+两个 HTML 是固定模板，不包含个人数据。页面通过：
+
+```html
+<script src="data/weread-data.js"></script>
 ```
 
-管理定时任务：
+加载本地数据文件。更新时只写 `data/weread-data.js` 和封面，不需要重新生成 HTML，也不需要任何构建工具。
 
-```powershell
-.\scripts\setup_task.ps1 -TaskAction status     # 查看状态
-.\scripts\setup_task.ps1 -TaskAction disable    # 暂停
-.\scripts\setup_task.ps1 -TaskAction enable     # 恢复
-.\scripts\setup_task.ps1 -TaskAction unregister # 删除
+封面按 `bookId` 增量更新：已有封面直接复用，只下载新增书籍的封面；从书架删除且没有任何笔记引用的封面会自动清理。
+
+首次使用或数据文件缺失时，页面会显示提示，而不会白屏。
+
+## 📁 目录结构
+
+```text
+weread-bookshelf/
+├── README.md
+├── SKILL.md                    # 给 agent 的接口与更新说明
+├── 我的书架-浅色版.html         # 固定页面
+├── 砖墙-便利贴.html             # 固定页面
+└── data/                       # 个人数据（git 忽略）
+    ├── weread-data.js          # 页面运行时数据
+    ├── covers/                 # 本地封面
+    ├── note-heights.json       # 可选：个别便利贴固定高度
+    └── title_mapping.json      # 可选：拼音书名映射
 ```
 
-## 📖 使用说明
+页面必须和 `data/` 目录放在一起。只复制 HTML 会没有数据、没有封面。
 
-### 书架页面
-- 左右滑动或点击切换书籍
-- 顶部导航可跳转到对应区域
-- 点击"便利贴墙"按钮跳转到便利贴页面
+## ❓ 常见问题
 
-### 便利贴页面
-- 搜索框输入书名或句子，按回车搜索
-- 点击任意便利贴查看详情
-- 左上角"返回书架"按钮返回
+**Q: 页面显示“还没有书架数据”？**  
+A: `data/weread-data.js` 没有加载到。确认 HTML 和 `data/` 在同一目录，并且文件内容是合法的 `window.WEREAD_DATA = {...};`。
 
-## 🔧 高级配置
+**Q: 封面不显示？**  
+A: 检查 `data/covers/` 下是否有对应图片；如果某张封面下载失败，页面会回退到远程 URL，需要联网才能看到。下次说“打开书架”只会重试缺失的封面，不会重新下载已有封面。
 
-### 拼音书名映射
-
-微信读书 API 对用户导入的私有书只返回拼音书名。可在 `data/title_mapping.json` 中手动配置：
+**Q: 导入的书显示拼音书名？**  
+A: 在 `data/title_mapping.json` 中配置：
 
 ```json
 {
@@ -98,53 +118,31 @@ cd weread-bookshelf
 }
 ```
 
-配置后重新运行 `update.ps1` 即可。
+然后让 agent 重新更新数据。
 
-## 📁 目录结构
+**Q: 可以在 Mac/Linux 上使用吗？**  
+A: 可以。取数用 `curl` 或 agent 的 HTTP 工具，页面是静态 HTML，不需要 Node 或 PowerShell。
 
-```
-weread-bookshelf/
-├── README.md                   # 本文件
-├── SKILL.md                    # Skill 说明文档（供 Agent 读取）
-├── .gitignore                  # Git 忽略规则
-├── scripts/
-│   ├── update.ps1              # 一键更新（数据+封面+页面）
-│   ├── fetch_data.ps1          # 获取微信读书数据
-│   ├── download_covers.ps1     # 下载封面并转 base64
-│   ├── generate_pages.ps1      # 生成 HTML 页面
-│   └── setup_task.ps1          # 定时任务管理
-├── templates/
-│   ├── bookshelf.template.html # 书架页面模板
-│   └── stickywall.template.html # 便利贴页面模板
-├── data/                       # 缓存数据（自动生成，已忽略）
-└── *.html                      # 生成的页面（已忽略）
-```
+**Q: 为什么没有定时自动更新？**  
+A: 本技能按“对话中触发”设计，不注册系统计划任务。需要刷新时说“更新数据/刷新书架”。
 
-## ❓ 常见问题
-
-**Q: 页面打开是空白？**
-A: 检查浏览器控制台是否有 JS 错误，通常是数据文件缺失，重新运行 `update.ps1` 即可。
-
-**Q: 导入的书显示拼音书名？**
-A: 见上方"拼音书名映射"配置。
-
-**Q: 想法内容为空？**
-A: 确保使用最新版本脚本，旧版本可能存在字段层级问题。
-
-**Q: 可以在 Mac/Linux 上运行吗？**
-A: 当前脚本是 PowerShell 写的，仅支持 Windows。如需跨平台可考虑改写为 Python 或 Node.js。
+**Q: 怎么调整某张便利贴的高度？**  
+A: 在 `data/note-heights.json` 里按 `createTime` 配置高度，然后让 agent 重新更新数据。没有配置的便利贴按内容自适应。
 
 ## 📄 数据来源
 
 通过微信读书 Agent API Gateway 获取：
+
 - `/shelf/sync` — 书架书籍列表
-- `/book/getprogress` — 每本书阅读进度
+- `/book/getprogress` — 阅读进度
 - `/user/notebooks` — 有笔记的书籍
 - `/book/bookmarklist` — 划线内容
 - `/review/list/mine` — 想法/点评
 - `/book/chapterinfo` — 章节目录
 - `/readdata/detail` — 阅读统计和偏好
 - `/book/recommend` — 推荐好书
+
+接口参数、分页和字段说明见 `SKILL.md`。
 
 ## 📝 License
 

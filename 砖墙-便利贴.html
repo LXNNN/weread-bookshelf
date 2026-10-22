@@ -3,507 +3,929 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>砖墙 · 我的句子便利贴</title>
+<title>我的微信读书 · 便利贴墙</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   :root {
     --accent: #D4A5A5;
     --gold: #D4C9A5;
-    --ink-faint: rgba(255,255,255,0.7);
-    --serif: "Noto Serif SC", "Songti SC", "KaiTi", serif;
+    --ink-faint: rgba(90, 70, 50, 0.55);
+    --serif: "Kaiti", "KaiTi", "STKaiti", "楷体", "Segoe Print", "Comic Sans MS", cursive;
   }
+
+  html { scroll-behavior: smooth; }
 
   body {
-    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
     min-height: 100vh;
+    background: #f0ede8;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(0,0,0,0.015) 1px, transparent 1px),
+      radial-gradient(circle at 70% 60%, rgba(0,0,0,0.02) 1px, transparent 1px),
+      radial-gradient(circle at 40% 80%, rgba(0,0,0,0.015) 1px, transparent 1px);
+    background-size: 3px 3px, 5px 5px, 4px 4px;
+    font-family: "Kaiti", "KaiTi", "STKaiti", "楷体", "Segoe Print", "Comic Sans MS", cursive;
+    padding: 0 0 40px;
     overflow-x: hidden;
-    /* 砖墙背景 - 真实纹理 */
-    background-color: #9a8575;
-    background-image: 
-      /* 砖缝阴影 */
-      linear-gradient(335deg, #857060 23px, transparent 23px),
-      linear-gradient(155deg, #857060 23px, transparent 23px),
-      linear-gradient(335deg, #857060 23px, transparent 23px),
-      linear-gradient(155deg, #857060 23px, transparent 23px),
-      /* 砖块高光 */
-      linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.1) 100%);
-    background-size: 58px 58px, 58px 58px, 58px 58px, 58px 58px, 100% 100%;
-    background-position: 0px 2px, 4px 35px, 29px 31px, 34px 6px, 0 0;
-    position: relative;
-    position: relative;
   }
 
-  /* 砖墙纹理叠加 */
-  body::before {
-    content: '';
+  /* ===== 顶部工具条 ===== */
+  .back-home {
     position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: 
-      radial-gradient(ellipse at 20% 30%, rgba(0,0,0,0.15) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 70%, rgba(0,0,0,0.1) 0%, transparent 50%),
-      linear-gradient(180deg, rgba(0,0,0,0.1) 0%, transparent 10%, transparent 90%, rgba(0,0,0,0.15) 100%);
-    pointer-events: none;
-    z-index: 0;
+    top: 20px;
+    left: 20px;
+    z-index: 1001;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(120,90,60,0.18);
+    border-radius: 20px;
+    color: #5b4636;
+    text-decoration: none;
+    font-size: 13px;
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    box-shadow: 0 4px 14px rgba(90,60,30,0.08);
+    transition: background .2s, transform .2s, box-shadow .2s;
   }
-
-  /* 顶部标题 */
-  /* 砖墙纹理叠加 */
-  body::before {
-    content: '';
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.18'/%3E%3C/svg%3E");
-    pointer-events: none;
-    z-index: 1;
-    mix-blend-mode: multiply;
+  .back-home:hover {
+    background: rgba(255,255,255,0.94);
+    transform: translateX(-3px);
+    box-shadow: 0 6px 18px rgba(90,60,30,0.12);
   }
+  .back-arrow { font-size: 16px; font-weight: bold; }
 
-  /* 砖墙光影叠加 */
-  body::after {
-    content: '';
+  .theme-switch {
     position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: 
-      radial-gradient(ellipse at 20% 20%, rgba(255,220,180,0.08) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 80%, rgba(0,0,0,0.15) 0%, transparent 50%);
-    pointer-events: none;
-    z-index: 1;
+    top: 20px;
+    right: 20px;
+    z-index: 1001;
+    display: flex;
+    gap: 3px;
+    padding: 4px;
+    border-radius: 22px;
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(120,90,60,0.18);
+    box-shadow: 0 4px 14px rgba(90,60,30,0.08);
+  }
+  .theme-switch button {
+    border: none;
+    background: transparent;
+    color: #7a6452;
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    font-size: 12px;
+    padding: 6px 13px;
+    border-radius: 18px;
+    cursor: pointer;
+    transition: background .2s, color .2s;
+  }
+  .theme-switch button:hover { color: #3f3025; }
+  .theme-switch button.active {
+    background: #5b4636;
+    color: #fff8ec;
+    font-weight: 600;
   }
 
   .header {
     position: relative;
     z-index: 10;
     text-align: center;
-    padding: 40px 20px 20px;
+    padding: 46px 20px 6px;
   }
-
-  /* 返回首页按钮 */
-  .back-home {
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 16px;
-    background: rgba(255,255,255,0.15);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.25);
-    border-radius: 20px;
-    color: #f5f0e8;
-    text-decoration: none;
-    font-size: 13px;
-    transition: all 0.3s ease;
-  }
-  .back-home:hover {
-    background: rgba(255,255,255,0.25);
-    transform: translateX(-3px);
-  }
-  .back-arrow {
-    font-size: 16px;
-    font-weight: bold;
-  }
-
   .header h1 {
-    font-family: "Noto Serif SC", "Songti SC", serif;
-    font-size: 36px;
-    color: #f5efe6;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-    letter-spacing: 6px;
+    font-family: "Noto Serif SC", "Songti SC", "KaiTi", "楷体", serif;
+    font-size: 38px;
+    color: #5b4636;
+    letter-spacing: 5px;
     margin-bottom: 8px;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.65);
   }
-
-  .header h1 span {
-    color: #f0c674;
-  }
-
+  .header h1 span { color: #c08a4a; }
   .header p {
+    font-family: "Segoe Print", "Comic Sans MS", cursive;
     font-size: 13px;
-    color: rgba(245,239,230,0.7);
+    color: #9a8575;
     letter-spacing: 2px;
   }
-
   .header .stats {
     margin-top: 12px;
     font-size: 12px;
-    color: rgba(245,239,230,0.6);
+    color: #8a7462;
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
   }
   .header .stats b {
-    color: #f0c674;
+    color: #b4643a;
     font-size: 14px;
   }
 
-  /* 搜索框 */
   .search-box {
     position: relative;
     z-index: 10;
-    max-width: 400px;
-    margin: 0 auto 30px;
-  }
-  .search-box input {
-    width: 100%;
-    height: 42px;
-    border: none;
-    border-radius: 21px;
-    padding: 0 20px 0 44px;
-    font-size: 14px;
-    background: rgba(255,255,255,0.95);
-    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-    outline: none;
+    max-width: 420px;
+    margin: 16px auto 18px;
+    padding: 0 20px;
   }
   .search-box .icon {
     position: absolute;
-    left: 16px;
+    left: 36px;
     top: 50%;
     transform: translateY(-50%);
-    color: #999;
-    font-size: 16px;
+    color: #9a8575;
+    font-size: 15px;
+    pointer-events: none;
+  }
+  .search-box input {
+    width: 100%;
+    height: 44px;
+    border: 1px solid rgba(120,90,60,0.12);
+    border-radius: 22px;
+    padding: 0 20px 0 44px;
+    font-size: 14px;
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: rgba(255,255,255,0.88);
+    box-shadow: 0 6px 20px rgba(90,60,30,0.08);
+    outline: none;
+    color: #4a3b2e;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .search-box input::placeholder { color: #b0a094; }
+  .search-box input:focus {
+    border-color: rgba(180,100,58,0.35);
+    box-shadow: 0 6px 24px rgba(90,60,30,0.12);
   }
 
-  /* 便利贴墙 */
+  /* ===== 墙 ===== */
   .wall {
     position: relative;
     z-index: 5;
-    padding: 20px 40px 80px;
-    min-height: calc(100vh - 200px);
+    max-width: 1100px;
+    margin: 0 auto;
+    min-height: 200px;
+    padding: 10px 0 30px;
   }
 
-  /* 便利贴 */
-  .sticky {
+  /* ===== 便利贴基础样式 ===== */
+  .note {
     position: absolute;
-    width: 162px;
-    min-height: 144px;
-    padding: 18px 14px 14px;
+    padding: 16px 18px;
+    box-shadow:
+      2px 3px 8px rgba(0,0,0,0.12),
+      0 1px 3px rgba(0,0,0,0.08),
+      inset 0 0 35px rgba(0,0,0,0.04),
+      inset 1px 1px 5px rgba(255,255,255,0.1),
+      inset -1px -1px 5px rgba(0,0,0,0.025);
+    line-height: 1.62;
+    font-size: 14px;
+    color: #333;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
     cursor: pointer;
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
-    box-shadow: 
-      2px 4px 8px rgba(0,0,0,0.3),
-      inset 0 0 30px rgba(0,0,0,0.03);
-    font-family: "KaiTi", "STKaiti", "楷体", serif;
-    overflow: hidden;
+    word-break: break-word;
+    transform: none !important;
   }
 
-  .sticky:hover {
-    transform: scale(1.08) rotate(0deg) !important;
-    box-shadow: 
-      4px 8px 24px rgba(0,0,0,0.4),
-      inset 0 0 30px rgba(0,0,0,0.03);
+  /* 纸张纹理叠加层 */
+  .note::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image:
+      radial-gradient(ellipse at 15% 20%, rgba(0,0,0,0.03) 0.7px, transparent 0.7px),
+      radial-gradient(ellipse at 60% 40%, rgba(0,0,0,0.025) 0.7px, transparent 0.7px),
+      radial-gradient(ellipse at 80% 70%, rgba(255,255,255,0.05) 0.7px, transparent 0.7px),
+      radial-gradient(ellipse at 30% 85%, rgba(0,0,0,0.02) 0.7px, transparent 0.7px),
+      radial-gradient(ellipse at 90% 10%, rgba(0,0,0,0.018) 0.7px, transparent 0.7px),
+      radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0.015) 0.5px, transparent 0.5px);
+    background-size: 4px 4px, 6px 6px, 5px 5px, 7px 7px, 8px 8px, 3px 3px;
+    pointer-events: none;
+    z-index: -1;
+    border-radius: inherit;
+  }
+
+  .note:hover {
+    transform: scale(1.045) !important;
+    box-shadow:
+      4px 6px 16px rgba(0,0,0,0.18),
+      0 2px 6px rgba(0,0,0,0.1),
+      inset 0 0 35px rgba(0,0,0,0.04),
+      inset 1px 1px 5px rgba(255,255,255,0.1),
+      inset -1px -1px 5px rgba(0,0,0,0.025);
     z-index: 100 !important;
   }
 
-  /* 便利贴颜色 - 莫兰迪色系 */
-  .sticky.gray-pink {
-    background: #D4A5A5;
-    color: #5C4040;
-  }
-  .sticky.gray-blue {
-    background: #A5B5C9;
-    color: #3A4555;
-  }
-  .sticky.gray-green {
-    background: #A5C9A5;
-    color: #3D5040;
-  }
-  .sticky.gray-purple {
-    background: #B5A5C9;
-    color: #453A55;
-  }
-  .sticky.gray-yellow {
-    background: #D4C9A5;
-    color: #554D35;
-  }
-  .sticky.gray-orange {
-    background: #D4B5A5;
-    color: #554535;
-  }
-  .sticky.cream {
-    background: #E8E0D5;
-    color: #4A4540;
-  }
-  .sticky.milk-tea {
-    background: #C9B8A0;
-    color: #4A4035;
+  /* ===== 颜色变体 ===== */
+  .note-pink { background: #f48fb1; border-top: 3px solid #e75989; color: #fff; }
+  .note-pink-deep { background: #e75989; color: #fff; }
+  .note-purple { background: #9575cd; border-top: 3px solid #7e57c2; }
+  .note-purple-deep { background: #7a5db4; color: #fff; }
+  .note-blue { background: #64b5f6; border-top: 3px solid #42a5f5; }
+  .note-blue-deep { background: #4995d7; color: #fff; }
+  .note-yellow { background: #fff176; border-top: 3px solid #ffee58; }
+  .note-yellow-bright { background: #ffca28; }
+  .note-orange { background: #ffb74d; border-top: 3px solid #ffa726; }
+  .note-orange-deep { background: #f79416; color: #fff; }
+  .note-green { background: #81c784; border-top: 3px solid #66bb6a; }
+  .note-mint { background: #26a69a; border-top: 3px solid #00897b; color: #fff; }
+  .note-red { background: #ea4e4b; color: #fff; border-top: 3px solid #c62828; }
+  .note-white { background: #ffffff; border-top: 3px solid #e0e0e0; }
+  .note-cream { background: #fff9c4; border-top: 3px solid #fff59d; }
+
+  /* ===== 透明格子背景便利贴 ===== */
+  .note-grid {
+    background-color: rgba(255,255,255,0.25);
+    background-image:
+      linear-gradient(rgba(80,80,80,0.12) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(80,80,80,0.12) 1px, transparent 1px);
+    background-size: 18px 18px;
+    border: 1px solid rgba(0,0,0,0.08);
   }
 
-  /* 胶带 */
-  .sticky .tape {
-    position: absolute;
-    top: -8px;
-    left: 50%;
-    transform: translateX(-50%) rotate(-3deg);
-    width: 60px;
-    height: 22px;
-    background: rgba(255,255,255,0.4);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
-  }
-
-  /* 图钉 */
-  .sticky .pin {
-    position: absolute;
-    top: 6px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, #ff6b6b, #c92a2a);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.5);
-  }
-
-  .sticky .type-tag {
-    display: inline-block;
-    font-size: 9px;
-    font-weight: 600;
-    padding: 2px 8px;
-    border-radius: 8px;
-    background: rgba(0,0,0,0.1);
-    margin-bottom: 8px;
-    letter-spacing: 1px;
-  }
-
-  .sticky .content {
-    font-size: 12px;
-    line-height: 1.7;
-    display: -webkit-box;
-    -webkit-line-clamp: 6;
-    -webkit-box-orient: vertical;
+  /* ===== 紫色外框白色内嵌标签样式 ===== */
+  .note-frame-purple {
+    background: #5c6bc0;
+    width: 220px;
+    min-height: 60px;
+    padding: 16px 18px;
+    border-radius: 3px;
+    box-shadow:
+      3px 4px 10px rgba(0,0,0,0.18),
+      0 2px 4px rgba(0,0,0,0.12),
+      inset 0 1px 0 rgba(255,255,255,0.15);
     overflow: hidden;
-    margin-bottom: 10px;
   }
-
-  .sticky .book {
-    font-size: 10px;
-    font-weight: 600;
-    opacity: 0.8;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    padding-top: 8px;
-    border-top: 1px dashed rgba(0,0,0,0.15);
-  }
-
-  .sticky .author {
-    font-size: 9px;
-    opacity: 0.6;
-    margin-top: 2px;
-  }
-
-  /* 想法便利贴特殊标记 */
-  .sticky.thought .type-tag {
-    background: rgba(0,0,0,0.15);
-  }
-
-  /* 模态框 */
-  .modal-overlay {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.7);
-    backdrop-filter: blur(6px);
+  .note-frame-purple .inner-label {
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 8px 12px;
+    color: #333;
+    box-shadow:
+      inset 0 1px 3px rgba(0,0,0,0.06),
+      0 1px 2px rgba(0,0,0,0.08);
+    line-height: 1.6;
+    font-size: 14px;
+    min-height: 100%;
+    max-height: 150px;
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    text-align: center;
+    overflow: hidden;
+  }
+  .note-frame-purple .inner-label span {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+    overflow: hidden;
+  }
+  .note-frame-purple:hover .inner-label {
+    box-shadow:
+      inset 0 1px 3px rgba(0,0,0,0.06),
+      0 2px 6px rgba(0,0,0,0.12);
+  }
+
+  /* ===== 米色大头钉高亮条样式 ===== */
+  .note-cream-pinned {
+    background: #fff9c4;
+    width: 230px;
+    min-height: 115px;
+    padding: 32px 18px 14px;
+    border-radius: 2px;
+    box-shadow:
+      2px 3px 8px rgba(0,0,0,0.12),
+      0 1px 3px rgba(0,0,0,0.08),
+      inset 0 1px 0 rgba(255,255,255,0.8);
+    overflow: hidden;
+  }
+  .note-cream-pinned .top-pins {
+    position: absolute;
+    top: 6px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 12px;
+  }
+  .note-cream-pinned .big-pin {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #ffffff, #f0f0f0 40%, #d0d0d0 70%, #b0b0b0);
+    box-shadow:
+      inset -2px -2px 4px rgba(0,0,0,0.18),
+      inset 2px 2px 4px rgba(255,255,255,0.7),
+      1px 2px 4px rgba(0,0,0,0.25);
+    position: relative;
+    flex-shrink: 0;
+  }
+  .note-cream-pinned .big-pin::after {
+    content: '';
+    position: absolute;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.65);
+    top: 4px;
+    left: 5px;
+  }
+  .note-cream-pinned .note-body {
+    line-height: 1.8;
+    font-size: 14px;
+    color: #4a4a4a;
+    text-align: center;
+    padding: 4px 0;
+    max-height: 120px;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+  }
+  .note-cream-pinned .highlight-bar {
+    background: #ffb300;
+    padding: 7px 10px;
+    margin-top: 10px;
+    border-radius: 2px;
+    font-size: 13px;
+    color: #fff;
+    text-align: center;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ===== 纯黄竖条便利贴 ===== */
+  .note-vbar-yellow {
+    background: #fff176;
+    width: 72px;
+    height: 234px;
+    padding: 22px 8px;
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    font-size: 19px;
+    letter-spacing: 6px;
+    color: #5d4037;
+    border-radius: 2px;
+    box-shadow:
+      2px 3px 8px rgba(0,0,0,0.12),
+      0 1px 3px rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .note-vbar-yellow .vbar-text {
+    max-height: 190px;
+    overflow: hidden;
+    display: block;
+  }
+
+  /* ===== 纯粉竖长方形便利贴 ===== */
+  .note-vrect-pink {
+    background: #f48fb1;
+    width: 175px;
+    min-height: 0;
+    padding: 22px 20px;
+    border-radius: 2px;
+    box-shadow:
+      2px 3px 8px rgba(0,0,0,0.12),
+      0 1px 3px rgba(0,0,0,0.08);
+    line-height: 1.9;
+    font-size: 15px;
+    color: #fff;
+    overflow: hidden;
+  }
+  .note-vrect-pink .vrect-text {
+    max-height: 190px;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 6;
+  }
+  .note-vrect-pink .signature {
+    text-align: right;
+    font-size: 12px;
+    margin-top: 18px;
+    font-style: italic;
+    color: #fff9c4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ===== 米色竖长方形带左侧钉子色条 ===== */
+  .note-vrect-pinned {
+    background: #fff9c4;
+    width: 195px;
+    min-height: 0;
+    padding: 35px 18px 18px 28px;
+    border-radius: 2px;
+    box-shadow:
+      2px 3px 8px rgba(0,0,0,0.12),
+      0 1px 3px rgba(0,0,0,0.08);
+    line-height: 1.9;
+    font-size: 14px;
+    color: #5d4037;
+  }
+  .note-vrect-pinned .color-bar {
+    position: absolute;
+    left: 14px;
+    top: 28px;
+    bottom: 18px;
+    width: 8px;
+    background: #e33d399c;
+    border-radius: 1px;
+    z-index: -1;
+  }
+  .note-vrect-pinned .top-pin-gold {
+    position: absolute;
+    top: -7px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #ffd54f, #c9a227 60%, #8b6914);
+    box-shadow:
+      inset -2px -2px 4px rgba(0,0,0,0.3),
+      inset 2px 2px 4px rgba(255,255,255,0.4),
+      1px 2px 3px rgba(0,0,0,0.3);
+    z-index: 10;
+  }
+  .note-vrect-pinned .top-pin-gold::after {
+    content: '';
+    position: absolute;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.5);
+    top: 4px;
+    left: 4px;
+  }
+  .note-vrect-pinned .vrect-content {
+    max-height: 225px;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 7;
+    overflow: hidden;
+  }
+  .note-vrect-pinned .vrect-book {
+    font-weight: bold;
+  }
+
+  /* ===== 尺寸变体 ===== */
+  .note-sm { width: 140px; min-height: 80px; font-size: 12px; padding: 12px 14px; }
+  .note-md { width: 200px; min-height: 100px; }
+  .note-lg { width: 260px; min-height: 130px; font-size: 15px; }
+  .note-wide { width: 280px; min-height: 75px; }
+  .note-tall { width: 160px; min-height: 0; }
+  .note-tiny { width: 100px; min-height: 60px; font-size: 11px; padding: 8px 10px; }
+
+  /* ===== 标题文字 ===== */
+  .note .title {
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 6px;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: inherit;
+  }
+  .note-tiny .title { font-size: 12px; }
+
+  .note-text {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+  }
+  .note-md .note-text { -webkit-line-clamp: 4; }
+  .note-sm .note-text { -webkit-line-clamp: 3; }
+  .note-tiny .note-text { -webkit-line-clamp: 2; }
+  .note-lg .note-text { -webkit-line-clamp: 4; }
+  .note-wide .note-text { -webkit-line-clamp: 2; }
+  .note-tall .note-text { -webkit-line-clamp: 6; }
+
+  .thought-badge {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    z-index: 2;
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    padding: 2px 6px;
+    border-radius: 8px;
+    background: rgba(0,0,0,0.14);
+    color: inherit;
+    pointer-events: none;
+  }
+  .note-vbar-yellow .thought-badge { display: none; }
+
+  /* ===== 图钉 ===== */
+  .pin {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    box-shadow:
+      inset -2px -2px 4px rgba(0,0,0,0.3),
+      inset 2px 2px 4px rgba(255,255,255,0.4),
+      1px 2px 3px rgba(0,0,0,0.3);
+    z-index: 10;
+  }
+  .pin::after {
+    content: '';
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.5);
+    top: 3px;
+    left: 4px;
+  }
+  .pin-gold { background: radial-gradient(circle at 35% 35%, #ffd54f, #c9a227 60%, #8b6914); }
+  .pin-orange { background: radial-gradient(circle at 35% 35%, #ff8a65, #e64a19 60%, #bf360c); }
+  .pin-purple { background: radial-gradient(circle at 35% 35%, #b39ddb, #7e57c2 60%, #512da8); }
+  .pin-green { background: radial-gradient(circle at 35% 35%, #81c784, #43a047 60%, #2e7d32); }
+  .pin-blue { background: radial-gradient(circle at 35% 35%, #64b5f6, #4995d7 60%, #1565c0); }
+  .pin-white { background: radial-gradient(circle at 35% 35%, #ffffff, #e0e0e0 60%, #bdbdbd); }
+  .pin-red { background: radial-gradient(circle at 35% 35%, #ef5350, #c62828 60%, #8e0000); }
+  .pin-left { left: 15px; transform: none; }
+  .pin-right { left: auto; right: 15px; transform: none; }
+
+  /* ===== 胶带 ===== */
+  .tape {
+    position: absolute;
+    width: 80px;
+    height: 24px;
+    background: rgba(255,255,255,0.4);
+    border-left: 1px dashed rgba(0,0,0,0.05);
+    border-right: 1px dashed rgba(0,0,0,0.05);
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%) rotate(-3deg);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+    z-index: 5;
+  }
+  .tape-washi {
+    background: repeating-linear-gradient(
+      45deg,
+      rgba(255,182,193,0.5),
+      rgba(255,182,193,0.5) 8px,
+      rgba(255,255,255,0.5) 8px,
+      rgba(255,255,255,0.5) 16px
+    );
+  }
+  .tape-grid {
+    background:
+      linear-gradient(rgba(100,100,100,0.15) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(100,100,100,0.15) 1px, transparent 1px),
+      rgba(255,255,255,0.3);
+    background-size: 8px 8px;
+  }
+
+  /* ===== 横线纸效果 ===== */
+  .lined {
+    background-image: repeating-linear-gradient(
+      transparent,
+      transparent 27px,
+      rgba(0,0,0,0.06) 27px,
+      rgba(0,0,0,0.06) 28px
+    );
+    padding-top: 8px;
+  }
+
+  /* ===== 空状态 ===== */
+  .empty-state {
+    text-align: center;
+    padding: 100px 20px;
+    color: #9a8575;
+    font-size: 16px;
+    letter-spacing: 2px;
+  }
+
+  /* ===== 页脚 ===== */
+  .footer {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    padding: 20px 20px 10px;
+    color: #999;
+    font-size: 13px;
+    font-family: "Microsoft YaHei", sans-serif;
+    line-height: 1.9;
+  }
+  .footer .footer-brand { color: #8a7462; }
+  .footer .footer-stats { color: #a09080; }
+
+  /* ===================== 小猫组件 CSS ===================== */
+  .pet-track{position:fixed !important;left:0;right:0;top:18%;height:112px;pointer-events:none;z-index:9999 !important}
+  .pet{
+    position:absolute;bottom:0;left:0;width:112px;height:auto;
+    pointer-events:auto;cursor:pointer;transform-origin:bottom center;will-change:transform;
+    filter:drop-shadow(0 8px 6px rgba(60,40,20,.18));
+  }
+  .pet img{width:100%;height:auto;display:block;user-select:none;-webkit-user-drag:none}
+  .pet .pet-ghost{position:absolute;left:0;top:0;width:100%;opacity:0;pointer-events:none}
+  .pet .shadow{
+    position:absolute;left:50%;bottom:-2px;width:74px;height:10px;margin-left:-37px;
+    background:radial-gradient(50% 50% at 50% 50%,rgba(60,40,20,.24),transparent 70%);border-radius:50%;
+    transform:scaleX(1);transition:transform .3s;
+  }
+  .pet-body{width:100%;height:100%;transform-origin:bottom center}
+  .pet.walking .pet-body{animation:bob .5s ease-in-out infinite}
+  @keyframes bob{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-3px) rotate(.4deg)}}
+  .pet .zzz{position:absolute;top:-10px;right:8px;color:var(--ink-faint);font-family:var(--serif);
+    font-weight:700;font-size:16px;opacity:0;pointer-events:none}
+  .pet.sleeping .zzz{opacity:1;animation:zzz 2.4s ease-in-out infinite}
+  @keyframes zzz{0%{opacity:0;transform:translateY(2px) rotate(-6deg) scale(.7)}30%{opacity:1}
+    100%{opacity:0;transform:translateY(-14px) rotate(6deg) scale(1.1)}}
+  .heart{position:absolute;width:12px;height:12px;pointer-events:none;background:var(--accent);
+    transform:rotate(45deg);border-radius:2px;opacity:0;z-index:4}
+  .heart::before,.heart::after{content:"";position:absolute;width:12px;height:12px;
+    background:var(--accent);border-radius:50%}
+  .heart::before{top:-6px;left:0}.heart::after{left:6px;top:0}
+  @keyframes floatUp{0%{opacity:1;transform:translate(0,0) rotate(45deg) scale(.6)}
+    100%{opacity:0;transform:translate(var(--dx,0),-46px) rotate(45deg) scale(1.1)}}
+
+  /* ===== 详情弹窗 ===== */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(45, 32, 22, 0.55);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
     opacity: 0;
     visibility: hidden;
-    transition: all 0.3s;
+    transition: opacity .25s, visibility .25s;
+    z-index: 1000;
   }
   .modal-overlay.active { opacity: 1; visibility: visible; }
 
   .modal {
-    background: #fff9c4;
-    border-radius: 12px;
-    padding: 32px 36px;
-    max-width: 600px;
-    width: 90%;
-    max-height: 80vh;
-    overflow-y: auto;
-    box-shadow: 8px 12px 40px rgba(0,0,0,0.5);
-    transform: rotate(-1deg) scale(0.9);
-    transition: transform 0.3s;
     position: relative;
-    font-family: "Noto Serif SC", "Songti SC", serif;
+    background: #fff9e8;
+    color: #4a3b2e;
+    width: 100%;
+    max-width: 620px;
+    max-height: 82vh;
+    overflow-y: auto;
+    padding: 34px 38px 36px;
+    border-radius: 4px;
+    box-shadow:
+      8px 12px 40px rgba(60,40,20,0.28),
+      0 2px 8px rgba(60,40,20,0.12);
+    transform: rotate(-0.6deg) scale(0.96);
+    transition: transform .25s ease;
+    font-family: "Kaiti", "KaiTi", "STKaiti", "楷体", "Segoe Print", "Comic Sans MS", cursive;
   }
-  .modal-overlay.active .modal { transform: rotate(0deg) scale(1); }
+  .modal::before {
+    content: '';
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    width: 120px;
+    height: 26px;
+    background: rgba(255,255,255,0.55);
+    border-left: 1px dashed rgba(90,60,30,0.08);
+    border-right: 1px dashed rgba(90,60,30,0.08);
+    transform: translateX(-50%) rotate(-2deg);
+    box-shadow: 0 1px 3px rgba(60,40,20,0.08);
+    pointer-events: none;
+  }
+  .modal-overlay.active .modal { transform: rotate(0) scale(1); }
 
   .modal-close {
     position: absolute;
-    top: 12px; right: 12px;
-    width: 30px; height: 30px;
-    border-radius: 50%;
+    top: 14px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
     border: none;
-    background: rgba(0,0,0,0.1);
+    border-radius: 50%;
+    background: rgba(90,60,30,0.08);
+    color: #6b5542;
+    font-size: 16px;
     cursor: pointer;
-    font-size: 14px;
+    transition: background .2s, transform .2s;
   }
+  .modal-close:hover { background: rgba(90,60,30,0.16); transform: rotate(90deg); }
 
   .modal-type {
     display: inline-block;
-    font-size: 11px;
-    font-weight: 600;
-    padding: 3px 10px;
+    padding: 3px 12px;
+    background: rgba(180,100,58,0.12);
+    color: #8a5a3a;
     border-radius: 10px;
-    background: rgba(0,0,0,0.1);
+    font-size: 12px;
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    letter-spacing: 2px;
     margin-bottom: 16px;
+  }
+
+  .modal-meta {
+    display: flex;
+    gap: 20px;
+    padding-bottom: 18px;
+    border-bottom: 1px dashed rgba(90,60,30,0.2);
+    margin-bottom: 20px;
+  }
+  .modal-cover {
+    flex-shrink: 0;
+    width: 74px;
+  }
+  .modal-cover img {
+    width: 100%;
+    display: block;
+    border-radius: 3px;
+    box-shadow: 2px 3px 8px rgba(60,40,20,0.22);
+  }
+  .modal-info { flex: 1; min-width: 0; }
+  .modal-book {
+    font-size: 20px;
+    font-weight: bold;
+    color: #5b4636;
+    line-height: 1.5;
+    margin-bottom: 3px;
+  }
+  .modal-author {
+    font-size: 13px;
+    color: #9a8575;
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    margin-bottom: 10px;
+  }
+  .modal-chapter-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px 14px;
+    margin-bottom: 12px;
+  }
+  .modal-chapter {
+    display: none;
+    font-size: 12px;
+    color: #8b7355;
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  .modal-date-wrap {
+    font-size: 11px;
+    color: #a09080;
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  .modal-date-label { margin-right: 4px; }
+
+  .modal-progress {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .modal-progress-bar {
+    flex: 1;
+    height: 6px;
+    background: rgba(90,60,30,0.1);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .modal-progress-fill {
+    height: 100%;
+    width: 0;
+    background: linear-gradient(90deg, #c89b5a, #b4643a);
+    border-radius: 3px;
+    transition: width .3s;
+  }
+  .modal-progress-text {
+    font-size: 12px;
+    color: #b4643a;
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-width: 32px;
+    text-align: right;
   }
 
   .modal-content {
     font-size: 17px;
     line-height: 2;
     color: #5d4e37;
-    margin-bottom: 20px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
   }
 
-  .modal-meta {
-    padding-bottom: 16px;
-    border-bottom: 1px dashed rgba(0,0,0,0.2);
-    font-size: 13px;
-    color: #5d4e37;
-    display: flex;
-    gap: 16px;
-    align-items: flex-start;
-    margin-bottom: 20px;
+  /* ===== 莫兰迪主题 ===== */
+  body.theme-morandi .note-pink,
+  body.theme-morandi .note-vrect-pink { background: #d4a5a5; border-top-color: #c08f8f; color: #5c4040; }
+  body.theme-morandi .note-pink-deep { background: #c08f8f; color: #3f2626; }
+  body.theme-morandi .note-purple { background: #b5a5c9; border-top-color: #9f8dbb; color: #453a55; }
+  body.theme-morandi .note-purple-deep { background: #8f86a8; color: #fff; }
+  body.theme-morandi .note-blue { background: #a5b5c9; border-top-color: #90a4bd; color: #3a4555; }
+  body.theme-morandi .note-blue-deep { background: #7f93a8; color: #fff; }
+  body.theme-morandi .note-yellow { background: #d4c9a5; border-top-color: #c4b78f; color: #554d35; }
+  body.theme-morandi .note-yellow-bright { background: #c9b8a0; color: #4a4035; }
+  body.theme-morandi .note-orange { background: #d4b5a5; border-top-color: #c4a08d; color: #554535; }
+  body.theme-morandi .note-orange-deep { background: #b98f7a; color: #fff; }
+  body.theme-morandi .note-green { background: #a5c9a5; border-top-color: #8fb58f; color: #3d5040; }
+  body.theme-morandi .note-mint { background: #8fb5ad; border-top-color: #7aa59b; color: #fff; }
+  body.theme-morandi .note-red { background: #b98a8a; border-top-color: #a67575; color: #fff; }
+  body.theme-morandi .note-white { background: #f1ebe2; border-top-color: #ddd3c5; color: #4a4540; }
+  body.theme-morandi .note-cream,
+  body.theme-morandi .note-cream-pinned,
+  body.theme-morandi .note-vrect-pinned { background: #e8e0d5; color: #4a4540; }
+  body.theme-morandi .note-vbar-yellow { background: #d4c9a5; color: #554d35; }
+  body.theme-morandi .note-grid {
+    background-color: rgba(232,224,213,0.55);
+    color: #4a4540;
+    background-image:
+      linear-gradient(rgba(90,70,50,0.1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(90,70,50,0.1) 1px, transparent 1px);
   }
-  .modal-cover {
-    flex-shrink: 0;
-    width: 70px;
-  }
-  .modal-cover img {
-    width: 100%;
-    height: auto;
-    border-radius: 3px;
-    box-shadow: 2px 4px 10px rgba(0,0,0,0.2);
-  }
-  .modal-info {
-    flex: 1;
-    min-width: 0;
-    padding-top: 4px;
-  }
-  .modal-book { font-weight: 600; }
-  .modal-chapter-row {
-    margin-top: 4px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 12px;
-  }
-  .modal-chapter {
-    color: #8b7355;
-    opacity: 0.85;
-  }
-  .modal-date-wrap {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    opacity: 0.7;
-  }
-  .modal-date-label {
-    font-size: 11px;
-  }
-  .modal-date { opacity: 0.9; }
-  .modal-author {
-    margin-top: 6px;
-    font-size: 12px;
-    opacity: 0.7;
-  }
-  .modal-progress {
-    margin-top: 10px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .modal-progress-bar {
-    flex: 1;
-    height: 5px;
-    background: rgba(0,0,0,0.1);
-    border-radius: 3px;
-    overflow: hidden;
-  }
-  .modal-progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #c89b5a, #b4643a);
-    border-radius: 3px;
-    transition: width 0.5s ease;
-  }
-  .modal-progress-text {
-    font-size: 11px;
-    font-weight: 600;
-    color: #b4643a;
-    min-width: 35px;
-    text-align: right;
-  }
+  body.theme-morandi .note-frame-purple { background: #8f86a8; }
+  body.theme-morandi .note-frame-purple .inner-label { background: #f1ebe2; color: #4a4540; }
+  body.theme-morandi .note-cream-pinned .note-body { color: #4a4540; }
+  body.theme-morandi .note-cream-pinned .highlight-bar { background: #b98f7a; }
+  body.theme-morandi .note-vrect-pink .signature { color: #f1ebe2; }
+  body.theme-morandi .note-vrect-pinned .color-bar { background: #c9a57a; }
 
-  .empty-state {
-    text-align: center;
-    padding: 80px 20px;
-    color: rgba(245,239,230,0.7);
-    font-size: 16px;
-  }
-
+  /* ===== 响应式 ===== */
   @media (max-width: 768px) {
-    .sticky { width: 140px; min-height: 130px; padding: 16px 12px 12px; }
-    .sticky .content { font-size: 11px; -webkit-line-clamp: 5; }
-    .header h1 { font-size: 28px; }
+    body { padding-bottom: 24px; }
+    .back-home {
+      top: 12px;
+      left: 12px;
+      padding: 7px 12px;
+      font-size: 12px;
+    }
+    .theme-switch { top: 12px; right: 12px; padding: 3px; }
+    .theme-switch button { font-size: 11px; padding: 5px 10px; }
+    .header { padding: 64px 16px 4px; }
+    .header h1 { font-size: 28px; letter-spacing: 3px; }
+    .header p { font-size: 11px; }
+    .search-box { margin: 14px auto 20px; padding: 0 16px; }
+    .pet-track { top: max(250px, 30%); }
+    .wall { max-width: none; min-height: auto; padding: 8px 16px 30px; }
+    .note {
+      position: relative !important;
+      top: auto !important;
+      left: auto !important;
+      margin: 10px auto;
+      transform: none !important;
+    }
+    .note:hover { transform: none !important; }
+    .footer { margin-top: 10px; padding-bottom: 24px; }
   }
 
-
-
-
-/* ===================== 小猫组件 CSS（可整体复制到其他静态页） ===================== */
-
-/* .cat-stage 仅作演示容器；嵌入你自己的页面时可删除，只要保留下面 .pet* 系列样式 */
-.cat-stage{position:relative;width:100%;max-width:720px;height:160px;margin:24px auto;
-  background:linear-gradient(180deg,#f7f2e9,#ece3d3);border-radius:18px;overflow:hidden;
-  box-shadow:0 12px 40px -22px rgba(60,40,20,.45)}
-.pet-track{position:fixed !important;left:0;right:0;top:18%;height:112px;pointer-events:none;z-index:9999 !important}
-.pet{
-  position:absolute;bottom:0;left:0;width:112px;height:auto;
-  pointer-events:auto;cursor:pointer;transform-origin:bottom center;will-change:transform;
-  filter:drop-shadow(0 8px 6px rgba(60,40,20,.18));
-}
-.pet img{width:100%;height:auto;display:block;user-select:none;-webkit-user-drag:none}
-.pet .pet-ghost{position:absolute;left:0;top:0;width:100%;opacity:0;pointer-events:none}
-.pet .shadow{
-  position:absolute;left:50%;bottom:-2px;width:74px;height:10px;margin-left:-37px;
-  background:radial-gradient(50% 50% at 50% 50%,rgba(60,40,20,.24),transparent 70%);border-radius:50%;
-  transform:scaleX(1);transition:transform .3s;
-}
-.pet-body{width:100%;height:100%;transform-origin:bottom center}
-.pet.walking .pet-body{animation:bob .5s ease-in-out infinite}
-@keyframes bob{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-3px) rotate(.4deg)}}
-.pet .zzz{position:absolute;top:-10px;right:8px;color:var(--ink-faint);font-family:var(--serif);
-  font-weight:700;font-size:16px;opacity:0;pointer-events:none}
-.pet.sleeping .zzz{opacity:1;animation:zzz 2.4s ease-in-out infinite}
-@keyframes zzz{0%{opacity:0;transform:translateY(2px) rotate(-6deg) scale(.7)}30%{opacity:1}
-  100%{opacity:0;transform:translateY(-14px) rotate(6deg) scale(1.1)}}
-.heart{position:absolute;width:12px;height:12px;pointer-events:none;background:var(--accent);
-  transform:rotate(45deg);border-radius:2px;opacity:0;z-index:4}
-.heart::before,.heart::after{content:"";position:absolute;width:12px;height:12px;
-  background:var(--accent);border-radius:50%}
-.heart::before{top:-6px;left:0}.heart::after{left:6px;top:0}
-@keyframes floatUp{0%{opacity:1;transform:translate(0,0) rotate(45deg) scale(.6)}
-  100%{opacity:0;transform:translate(var(--dx,0),-46px) rotate(45deg) scale(1.1)}}
-
-
+  @media (max-width: 640px) {
+    .modal { padding: 28px 22px 30px; }
+    .modal-meta { gap: 14px; }
+    .modal-cover { width: 60px; }
+    .modal-book { font-size: 18px; }
+    .modal-content { font-size: 16px; line-height: 1.9; }
+    .back-text { display: none; }
+    .back-home { padding: 8px 11px; }
+  }
 </style>
 </head>
-<body>
+<body class="theme-saturated">
 
 <a href="我的书架-浅色版.html" class="back-home" title="返回书架">
   <span class="back-arrow">←</span>
   <span class="back-text">返回书架</span>
 </a>
 
-<div class="header">
-  <h1>砖墙<span> · </span>句子便利贴</h1>
-  <p>Words Pinned on the Wall</p>
-  <div class="stats"><b id="totalCount">86</b> 张便利贴 · 点击查看详情</div>
+<div class="theme-switch" id="themeSwitch" role="group" aria-label="配色主题">
+  <button type="button" data-theme="morandi">莫兰迪</button>
+  <button type="button" data-theme="saturated" class="active">高饱和</button>
 </div>
 
+<div class="header">
+  <h1>墙<span> · </span>句子便利贴</h1>
+  <p>Words Pinned on the Wall</p>
+  <div class="stats"><b id="totalCount">0</b> 张便利贴 · 点击查看详情</div>
+</div>
 
+<div class="search-box">
+  <span class="icon">🔍</span>
+  <input type="text" id="searchInput" placeholder="搜索书名、作者或句子…" autocomplete="off">
+</div>
 
+<div class="wall" id="wall"></div>
 
+<div class="footer">
+  <div class="footer-brand">📚 微信读书 · 便利贴墙</div>
+  <div class="footer-stats" id="footerStats"></div>
+  <div id="dataUpdatedAt" style="margin-top:8px;font-size:12px;color:var(--ink-faint);"></div>
+</div>
 
 <div class="pet-track" id="petTrack">
     <div class="pet walking" id="pet" title="摸摸我~">
@@ -515,16 +937,10 @@
       <div class="shadow"></div>
     </div>
   </div>
-<div class="search-box">
-  <span class="icon">🔍</span>
-  <input type="text" id="searchInput" placeholder="搜索书名或句子…">
-</div>
-
-<div class="wall" id="wall"></div>
 
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
-    <button class="modal-close" id="modalClose">✕</button>
+    <button class="modal-close" id="modalClose" aria-label="关闭">✕</button>
     <span class="modal-type" id="modalType">划线</span>
     <div class="modal-meta">
       <div class="modal-cover" id="modalCover">
@@ -552,108 +968,315 @@
   </div>
 </div>
 
+<div id="dataMissing" style="display:flex;position:fixed;inset:0;z-index:99999;background:rgba(240,237,232,.97);align-items:center;justify-content:center;padding:24px;text-align:center;">
+  <div style="max-width:460px;font-family:var(--serif);">
+    <h2 style="font-size:24px;margin-bottom:12px;color:#4a4540;">还没有便利贴数据</h2>
+    <p style="line-height:1.9;color:#6b5f52;">请在 agent 中输入「打开书架」获取最新数据。<br>首次使用需要先配置 <code>WEREAD_API_KEY</code>。</p>
+  </div>
+</div>
+
+<script src="data/weread-data.js"></script>
 <script>
-const bookCovers = {{COVERS_DATA}};
-
-const bookChapterProgress = {{CHAPTER_PROGRESS_DATA}};
-
-const colors = ['gray-pink', 'gray-blue', 'gray-green', 'gray-purple', 'gray-yellow', 'gray-orange', 'cream', 'milk-tea'];
-
-const notes = {{NOTES_DATA}};
-
-function formatDate(ts) {
-  const d = new Date(ts * 1000);
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const DATA = window.WEREAD_DATA || {};
+const bookCovers = DATA.covers || {};
+const bookChapterProgress = DATA.chapterProgress || {};
+const notes = Array.isArray(DATA.notes) ? DATA.notes : [];
+if (window.WEREAD_DATA && Array.isArray(DATA.notes)) {
+  document.getElementById('dataMissing').style.display = 'none';
 }
+
+const wall = document.getElementById('wall');
+const totalCountEl = document.getElementById('totalCount');
+const footerStats = document.getElementById('footerStats');
+const searchInput = document.getElementById('searchInput');
+
+let currentNotes = notes;
 
 function escapeHtml(text) {
   const div = document.createElement('div');
-  div.textContent = text;
+  div.textContent = text == null ? '' : String(text);
   return div.innerHTML;
 }
 
-// 生成不规则排列
+function plainBookName(title) {
+  return String(title == null ? '' : title).replace(/^《|》$/g, '');
+}
+
+function bookName(title) {
+  return `《${plainBookName(title)}》`;
+}
+
+function truncate(text, max) {
+  const s = String(text == null ? '' : text).replace(/\s+/g, ' ').trim();
+  return s.length > max ? s.slice(0, max - 1) + '…' : s;
+}
+
+function formatDate(ts) {
+  if (!ts) return '';
+  const d = new Date(Number(ts) * 1000);
+  if (Number.isNaN(d.getTime())) return '';
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+// 固定高度的便利贴：内容少时自动放大字号，内容多时自动增加显示行数
+function fitTextToHeight(el, height) {
+  const style = getComputedStyle(el);
+  const contentHeight =
+    height -
+    (parseFloat(style.borderTopWidth) || 0) -
+    (parseFloat(style.paddingTop) || 0) -
+    (parseFloat(style.paddingBottom) || 0);
+
+  // 紫色边框贴：让内部白色标签跟着长高，并按高度增加文字行数
+  const frameLabel = el.querySelector('.inner-label');
+  if (frameLabel) {
+    frameLabel.style.maxHeight = 'none';
+    frameLabel.style.height = `${contentHeight}px`;
+    const labelStyle = getComputedStyle(frameLabel);
+    const lineHeight = parseFloat(labelStyle.lineHeight);
+    const span = frameLabel.querySelector('span');
+    if (!lineHeight || !span) return;
+    const labelSpace =
+      contentHeight -
+      (parseFloat(labelStyle.paddingTop) || 0) -
+      (parseFloat(labelStyle.paddingBottom) || 0);
+    span.style.webkitLineClamp = String(Math.max(1, Math.floor((labelSpace + 1) / lineHeight)));
+    return;
+  }
+
+  const textEl = el.querySelector('.note-text');
+  if (!textEl) return;
+  const titleEl = el.querySelector('.title');
+  let titleHeight = 0;
+  if (titleEl) {
+    titleHeight =
+      titleEl.getBoundingClientRect().height +
+      (parseFloat(getComputedStyle(titleEl).marginBottom) || 0);
+  }
+  const available = contentHeight - titleHeight;
+
+  // 先取消行数限制，量一下内容实际需要的高度；放得下且还有余量时逐步放大字号
+  const baseFont = parseFloat(style.fontSize) || 14;
+  let fontSize = baseFont;
+  textEl.style.webkitLineClamp = 'unset';
+  let textHeight = textEl.getBoundingClientRect().height;
+  if (textHeight > 0 && textHeight <= available) {
+    for (let size = baseFont + 0.5; size <= 18; size += 0.5) {
+      el.style.fontSize = `${size}px`;
+      const nextHeight = textEl.getBoundingClientRect().height;
+      if (nextHeight > available) break;
+      fontSize = size;
+      textHeight = nextHeight;
+    }
+  }
+  // 内容太短时放大字号也填不满，保持原字号，避免正文比标题还大
+  if (fontSize > baseFont && textHeight < available * 0.5) {
+    fontSize = baseFont;
+    el.style.fontSize = `${baseFont}px`;
+    textHeight = textEl.getBoundingClientRect().height;
+  }
+  el.style.fontSize = `${fontSize}px`;
+
+  const lineHeight = parseFloat(getComputedStyle(el).lineHeight);
+  if (!lineHeight) return;
+  const lines = Math.max(1, Math.floor((available + 1) / lineHeight));
+  textEl.style.webkitLineClamp = String(lines);
+}
+
+const NOTE_VARIANTS = [
+  { kind: 'standard', cls: 'note-pink note-md', pins: ['pin-gold pin-left'] },
+  { kind: 'standard', cls: 'note-purple note-sm', pins: ['pin-white'] },
+  { kind: 'standard', cls: 'note-cream note-lg', pins: ['pin-orange pin-left', 'pin-orange pin-right'] },
+  { kind: 'standard', cls: 'note-mint note-wide', pins: ['pin-gold'] },
+  { kind: 'grid', cls: 'note-grid note-md' },
+  { kind: 'frame', cls: 'note-frame-purple' },
+  { kind: 'pinned', cls: 'note-cream-pinned' },
+  { kind: 'vbar', cls: 'note-vbar-yellow' },
+  { kind: 'vrect', cls: 'note-vrect-pink' },
+  { kind: 'standard', cls: 'note-blue-deep note-sm', pins: ['pin-gold'] },
+  { kind: 'standard', cls: 'note-orange note-wide', pins: ['pin-orange'] },
+  { kind: 'standard', cls: 'note-white note-md lined', tape: 'tape-grid' },
+  { kind: 'standard', cls: 'note-green note-lg', pins: ['pin-gold pin-left', 'pin-gold pin-right'] },
+  { kind: 'standard', cls: 'note-yellow-bright note-tall', pins: ['pin-white'] },
+  { kind: 'grid', cls: 'note-grid note-wide' },
+  { kind: 'standard', cls: 'note-pink-deep note-sm', pins: ['pin-purple'] },
+  { kind: 'standard', cls: 'note-purple-deep note-sm', pins: ['pin-gold'] },
+  { kind: 'standard', cls: 'note-blue note-wide' },
+  { kind: 'standard', cls: 'note-orange-deep note-md', pins: ['pin-white pin-left', 'pin-white pin-right'] },
+  { kind: 'standard', cls: 'note-red note-sm', pins: ['pin-white'] },
+  { kind: 'standard', cls: 'note-white note-md', pins: ['pin-white pin-left', 'pin-white pin-right'] },
+  { kind: 'standard', cls: 'note-yellow note-md', pins: ['pin-gold'] },
+  { kind: 'vrectPinned', cls: 'note-vrect-pinned' },
+  { kind: 'standard', cls: 'note-cream note-sm' }
+];
+
+const THOUGHT_VARIANTS = [
+  { kind: 'standard', cls: 'note-yellow-bright note-tiny', pins: ['pin-gold'] },
+  { kind: 'standard', cls: 'note-red note-sm', pins: ['pin-white'] },
+  { kind: 'standard', cls: 'note-white note-sm', pins: ['pin-white pin-left', 'pin-white pin-right'] },
+  { kind: 'standard', cls: 'note-purple-deep note-sm', pins: ['pin-gold'] },
+  { kind: 'standard', cls: 'note-orange-deep note-sm', pins: ['pin-white'] },
+  { kind: 'standard', cls: 'note-yellow-bright note-tall', pins: ['pin-white'] }
+];
+
+// 布局占几列：横贴和大方块占 2 列，其余保持窄贴
+function variantSpan(variant) {
+  return /\bnote-(lg|wide)\b/.test(variant.cls) ? 2 : 1;
+}
+
+function pinHtml(pins) {
+  if (!pins || !pins.length) return '';
+  return pins.map((p) => `<div class="pin ${p}"></div>`).join('');
+}
+
+function renderVariant(note, variant) {
+  const content = note.content == null ? '' : String(note.content);
+  const isThought = note.type === 'thought';
+  const title = isThought ? '想法' : bookName(note.title);
+
+  switch (variant.kind) {
+    case 'frame':
+      return `<div class="inner-label"><span>${escapeHtml(truncate(content, 70))}</span></div>`;
+
+    case 'pinned':
+      return `<div class="top-pins"><div class="big-pin"></div><div class="big-pin"></div></div>` +
+        `<div class="note-body">${escapeHtml(truncate(content, 80))}</div>` +
+        `<div class="highlight-bar">${escapeHtml(plainBookName(note.title))}</div>`;
+
+    case 'vbar':
+      return `<span class="vbar-text">${escapeHtml(truncate(content, 18))}</span>`;
+
+    case 'vrect':
+      return `<div class="vrect-text">${escapeHtml(truncate(content, 80))}</div>` +
+        `<div class="signature">${escapeHtml(bookName(note.title))}</div>`;
+
+    case 'vrectPinned':
+      return `<div class="top-pin-gold"></div>` +
+        `<div class="color-bar"></div>` +
+        `<div class="vrect-content"><span class="vrect-book">${escapeHtml(bookName(note.title))}</span><br>${escapeHtml(truncate(content, 70))}</div>`;
+
+    case 'grid':
+      return `${pinHtml(variant.pins)}${variant.tape ? `<div class="tape ${variant.tape}"></div>` : ''}` +
+        `<span class="title">${isThought ? '想法' : '摘抄'}</span>` +
+        `<div class="note-text">${escapeHtml(content)}</div>`;
+
+    default:
+      return `${pinHtml(variant.pins)}${variant.tape ? `<div class="tape ${variant.tape}"></div>` : ''}` +
+        `<span class="title">${escapeHtml(title)}</span>` +
+        `<div class="note-text">${escapeHtml(content)}</div>`;
+  }
+}
+
+function updateFooter(data) {
+  const bookmarkCount = data.filter((n) => n.type !== 'thought').length;
+  const thoughtCount = data.length - bookmarkCount;
+  const bookCount = new Set(data.map((n) => n.title)).size;
+  footerStats.textContent = `${bookmarkCount} 条划线 · ${thoughtCount} 条想法 · 来自 ${bookCount} 本书`;
+}
+
 function renderWall(data) {
-  const wall = document.getElementById('wall');
-  
+  currentNotes = data;
+  wall.innerHTML = '';
+  wall.style.width = '';
+  totalCountEl.textContent = data.length;
+  updateFooter(data);
+
   if (data.length === 0) {
+    wall.style.height = 'auto';
     wall.innerHTML = '<div class="empty-state">没有找到相关便利贴</div>';
     return;
   }
 
-  wall.innerHTML = '';
-  const wallWidth = wall.clientWidth || window.innerWidth - 80;
-  const wallHeight = Math.max(800, data.length * 25);
-  
-  // 用网格+随机偏移实现不规则排列
-  const cols = Math.max(5, Math.floor(wallWidth / 160));
-  const cellW = wallWidth / cols;
-  const cellH = 175;
-  
-  data.forEach((note, i) => {
-    const row = Math.floor(i / cols);
-    const col = i % cols;
-    
-    // 随机偏移和旋转 - 更随意的角度
-    const offsetX = (Math.random() - 0.5) * 50;
-    const offsetY = (Math.random() - 0.5) * 35;
-    // 70%小角度(-5~5度)，30%大角度(-12~12度)，更自然
-    const rotate = Math.random() < 0.7 
-      ? (Math.random() - 0.5) * 10 
-      : (Math.random() - 0.5) * 24;
-    const color = colors[i % colors.length];
-    const isThought = note.type === 'thought';
-    
-    // 偶数行错开半格
-    const rowOffset = (row % 2 === 1) ? cellW * 0.4 : 0;
-    
-    const x = col * cellW + offsetX + rowOffset;
-    const y = row * cellH + offsetY + 20;
-    
-    const sticky = document.createElement('div');
-    sticky.className = `sticky ${color} ${isThought ? 'thought' : ''}`;
-    sticky.style.left = `${x}px`;
-    sticky.style.top = `${y}px`;
-    sticky.style.transform = `rotate(${rotate}deg)`;
-    sticky.style.setProperty('--base-rotate', `${rotate}deg`);
-    sticky.style.zIndex = Math.floor(Math.random() * 10) + 1;
-    
-    // 随机用胶带或图钉
-    const decor = Math.random() > 0.5 
-      ? '<div class="tape"></div>' 
-      : '<div class="pin"></div>';
-    
-    sticky.innerHTML = `
-      ${decor}
-      <div class="type-tag">${isThought ? '想法' : '划线'}</div>
-      <div class="content">${escapeHtml(note.content)}</div>
-      <div class="book">《${note.title}》</div>
-      <div class="author">${note.author || '佚名'}</div>
-    `;
-    
-    sticky.addEventListener('click', () => openModal(note));
-    wall.appendChild(sticky);
+  const mobile = window.innerWidth <= 768;
+  if (mobile) {
+    wall.style.height = 'auto';
+  }
+
+  const gap = 8;
+  const wallWidth = wall.clientWidth || Math.min(1100, window.innerWidth - 40);
+  const cols = mobile ? 1 : Math.max(4, Math.min(8, Math.round(wallWidth / 140)));
+  const colW = mobile ? wallWidth : (wallWidth - gap * (cols - 1)) / cols;
+
+  const elements = data.map((note, i) => {
+    const pool = note.type === 'thought' ? THOUGHT_VARIANTS : NOTE_VARIANTS;
+    const variant = pool[i % pool.length];
+    const span = mobile ? 1 : Math.min(variantSpan(variant), cols);
+    const el = document.createElement('div');
+    el.className = `note ${variant.cls}${note.type === 'thought' ? ' is-thought' : ''}`;
+    el.style.visibility = 'hidden';
+    el.style.zIndex = String(i + 1);
+    el.dataset.span = String(span);
+    if (!mobile) {
+      el.style.width = `${span * colW + (span - 1) * gap}px`;
+    }
+    const fixedHeight = Number(note.height) || 0;
+    if (fixedHeight) el.style.height = `${fixedHeight}px`;
+
+    const badge = note.type === 'thought' && variant.kind !== 'standard' && variant.kind !== 'grid'
+      ? '<span class="thought-badge">想法</span>'
+      : '';
+
+    el.innerHTML = badge + renderVariant(note, variant);
+    el.addEventListener('click', () => openModal(note));
+    wall.appendChild(el);
+    if (fixedHeight) fitTextToHeight(el, fixedHeight);
+    return el;
   });
-  
-  wall.style.height = `${Math.ceil(data.length / cols) * cellH + 100}px`;
+
+  if (!mobile) {
+    // 等高列瀑布流：普通贴占 1 列，横贴/大方块占 2 列；按数据顺序放进当前最矮的列
+    // 不设条数上限，新增笔记继续向下排
+    const colHeights = new Array(cols).fill(0);
+    elements.forEach((el) => {
+      const span = Math.min(Number(el.dataset.span) || 1, cols);
+      let bestLeft = 0;
+      let bestTop = Infinity;
+      for (let c = 0; c <= cols - span; c++) {
+        let top = 0;
+        for (let k = 0; k < span; k++) top = Math.max(top, colHeights[c + k]);
+        if (top < bestTop - 0.5) {
+          bestTop = top;
+          bestLeft = c;
+        }
+      }
+      el.style.left = `${bestLeft * (colW + gap)}px`;
+      el.style.top = `${bestTop}px`;
+      // 用小数高度参与排版，避免 offsetHeight 取整导致列高误差
+      const packHeight = el.getBoundingClientRect().height;
+      const bottom = bestTop + packHeight;
+      for (let k = 0; k < span; k++) colHeights[bestLeft + k] = bottom + gap;
+    });
+    const maxBottom = Math.max(...colHeights) - gap;
+    const maxRight = Math.max(
+      ...elements.map((el) => parseFloat(el.style.left) + el.getBoundingClientRect().width),
+      0
+    );
+    // 搜索结果较少时收窄墙宽并居中，左右两边仍然对齐
+    if (maxRight > 0 && maxRight < wallWidth - 1) {
+      wall.style.width = `${maxRight}px`;
+    }
+    wall.style.height = `${maxBottom + 40}px`;
+  }
+
+  elements.forEach((el) => { el.style.visibility = 'visible'; });
 }
 
 function openModal(note) {
   const overlay = document.getElementById('modalOverlay');
   const isThought = note.type === 'thought';
-  document.getElementById('modalType').textContent = isThought ? '想法' : '划线';
-  document.getElementById('modalContent').textContent = note.content;
-  document.getElementById('modalBook').textContent = `《${note.title}》`;
-  document.getElementById('modalAuthor').textContent = note.author || '佚名';
-  document.getElementById('modalDate').textContent = formatDate(note.createTime);
-  document.getElementById('modalDateLabel').textContent = isThought ? '写想法日期' : '划线日期';
-  
-  // 章节信息
-  const chapterEl = document.getElementById('modalChapter');
   const bookData = bookChapterProgress[note.bookId];
+  const title = note.title == null ? '' : String(note.title);
+
+  document.getElementById('modalType').textContent = isThought ? '想法' : '划线';
+  document.getElementById('modalContent').textContent = note.content == null ? '' : String(note.content);
+  document.getElementById('modalBook').textContent = bookName(title);
+  document.getElementById('modalAuthor').textContent = note.author || '佚名';
+  document.getElementById('modalDate').textContent = formatDate(note.createTime) || '—';
+  document.getElementById('modalDateLabel').textContent = isThought ? '写想法日期' : '划线日期';
+
+  const chapterEl = document.getElementById('modalChapter');
   if (bookData && bookData.chapters && bookData.chapters[note.chapterUid]) {
-    let chapterTitle = bookData.chapters[note.chapterUid];
-    // 格式化章节名称：纯数字/中文数字 → 第X章
+    let chapterTitle = String(bookData.chapters[note.chapterUid]);
     const cnNums = '一二三四五六七八九十百千零';
     if (/^[0-9]+$/.test(chapterTitle)) {
       chapterTitle = `第${chapterTitle}章`;
@@ -665,20 +1288,18 @@ function openModal(note) {
   } else {
     chapterEl.style.display = 'none';
   }
-  
-  // 阅读进度
-  const progress = bookData ? bookData.progress : 0;
+
+  const progress = bookData ? Math.max(0, Math.min(100, Number(bookData.progress) || 0)) : 0;
   document.getElementById('modalProgressFill').style.width = `${progress}%`;
   document.getElementById('modalProgressText').textContent = `${progress}%`;
-  
-  // 查找封面
+
   const coverImg = document.getElementById('modalCoverImg');
   const coverDiv = document.getElementById('modalCover');
-  let coverUrl = bookCovers[note.title];
-  // 模糊匹配
-  if (!coverUrl) {
+  let coverUrl = bookCovers[title];
+  if (!coverUrl && title) {
     for (const key in bookCovers) {
-      if (key.includes(note.title) || note.title.includes(key.replace(/[《》]/g, ''))) {
+      const cleanKey = key.replace(/[《》]/g, '');
+      if (key.includes(title) || title.includes(cleanKey)) {
         coverUrl = bookCovers[key];
         break;
       }
@@ -688,14 +1309,17 @@ function openModal(note) {
     coverImg.src = coverUrl;
     coverDiv.style.display = 'block';
   } else {
+    coverImg.removeAttribute('src');
     coverDiv.style.display = 'none';
   }
-  
+
   overlay.classList.add('active');
+  document.body.style.overflow = 'hidden';
 }
 
 function closeModal() {
   document.getElementById('modalOverlay').classList.remove('active');
+  document.body.style.overflow = '';
 }
 
 document.getElementById('modalClose').addEventListener('click', closeModal);
@@ -706,40 +1330,39 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') closeModal();
 });
 
-// 搜索
-document.getElementById('searchInput').addEventListener('keydown', (e) => {
-  if (e.key !== 'Enter') return;
+// 搜索：书名 / 作者 / 句子，回车触发
+searchInput.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' || e.isComposing) return;
   const keyword = e.target.value.trim().toLowerCase();
   if (!keyword) {
     renderWall(notes);
     return;
   }
-  const filtered = notes.filter(n =>
-    n.title.toLowerCase().includes(keyword) ||
-    n.content.toLowerCase().includes(keyword) ||
-    (n.author && n.author.toLowerCase().includes(keyword))
+  const filtered = notes.filter((n) =>
+    String(n.title || '').toLowerCase().includes(keyword) ||
+    String(n.content || '').toLowerCase().includes(keyword) ||
+    String(n.author || '').toLowerCase().includes(keyword)
   );
   renderWall(filtered);
 });
 
-// 初始化
-document.getElementById('totalCount').textContent = notes.length;
-renderWall(notes);
-
-// 窗口大小变化时重新排列
+// 窗口大小变化时重新排列，保留当前搜索结果
 let resizeTimer;
 window.addEventListener('resize', () => {
   clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(() => renderWall(notes), 300);
+  resizeTimer = setTimeout(() => renderWall(currentNotes), 200);
 });
 
+renderWall(notes);
 
-
-
+const updatedEl = document.getElementById('dataUpdatedAt');
+if (updatedEl && DATA.generatedAt) {
+  const updatedDate = new Date(DATA.generatedAt);
+  if (!Number.isNaN(updatedDate.getTime())) {
+    updatedEl.textContent = `数据更新于 ${updatedDate.toLocaleString('zh-CN', { hour12: false })}`;
+  }
+}
 </script>
-
-
-
 
 <script>
 /* ===================== 小猫 JS（可复制） ===================== */
@@ -818,18 +1441,35 @@ window.addEventListener('resize', () => {
     pet.animate([{transform:pet.style.transform+" scale(1.12)"},{transform:pet.style.transform}],{duration:240});
   });
 })();
-
-
 </script>
+
+<script>
+/* 配色主题切换：高饱和（参考版默认）/ 莫兰迪 */
+(function () {
+  var KEY = 'weread-sticky-theme-v2';
+  var body = document.body;
+  var buttons = document.querySelectorAll('#themeSwitch button');
+
+  function apply(theme) {
+    var morandi = theme === 'morandi';
+    body.classList.toggle('theme-morandi', morandi);
+    body.classList.toggle('theme-saturated', !morandi);
+    buttons.forEach(function (btn) {
+      btn.classList.toggle('active', btn.dataset.theme === theme);
+    });
+    try { localStorage.setItem(KEY, theme); } catch (e) {}
+  }
+
+  var saved = 'saturated';
+  try { saved = localStorage.getItem(KEY) || 'saturated'; } catch (e) {}
+  if (saved !== 'morandi') { saved = 'saturated'; }
+  apply(saved);
+
+  buttons.forEach(function (btn) {
+    btn.addEventListener('click', function () { apply(btn.dataset.theme); });
+  });
+})();
+</script>
+
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-

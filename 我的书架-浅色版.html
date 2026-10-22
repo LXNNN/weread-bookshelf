@@ -1733,22 +1733,22 @@
     <div class="main-container">
     <div class="hero-section">
     <header class="header fade-in-up" id="shelf">
-      <div class="hero-eyebrow"><span class="line"></span>微信读书 · <b>26 本</b>藏书<span class="line"></span></div>
+      <div class="hero-eyebrow"><span class="line"></span>微信读书 · <b id="bookCount">0</b> 本藏书<span class="line"></span></div>
       <h1>我的<span class="accent">书架</span><span class="seal">藏书</span></h1>
       <p class="hero-en">Discover a Better World Between the Pages.</p>
       <div class="reading-stats">
         <div class="stat-item">
-          <span class="stat-value">151<span class="stat-unit">小时</span></span>
+          <span class="stat-value"><span id="totalReadHours">0</span><span class="stat-unit">小时</span></span>
           <span class="stat-label">总阅读时长</span>
         </div>
         <div class="stat-divider"></div>
         <div class="stat-item">
-          <span class="stat-value">142<span class="stat-unit">天</span></span>
+          <span class="stat-value"><span id="readDays">0</span><span class="stat-unit">天</span></span>
           <span class="stat-label">阅读天数</span>
         </div>
         <div class="stat-divider"></div>
         <div class="stat-item">
-          <span class="stat-value">2<span class="stat-unit">本</span></span>
+          <span class="stat-value"><span id="finishedBooks">0</span><span class="stat-unit">本</span></span>
           <span class="stat-label">已读完</span>
         </div>
       </div>
@@ -1790,7 +1790,7 @@
       <div class="stat-card heatmap-card reveal">
         <div class="stat-card-header">
           <h3>阅读热力图</h3>
-          <span class="stat-card-subtitle en">October 2026</span>
+          <span class="stat-card-subtitle en" id="heatmapMonthLabel"></span>
         </div>
         <div class="heatmap-weekdays">
           <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
@@ -1819,7 +1819,7 @@
           <div class="donut-wrap">
             <svg viewBox="0 0 180 180" id="donutChart"></svg>
             <div class="donut-center">
-              <div class="num" id="donutTotal">6</div>
+              <div class="num" id="donutTotal">0</div>
               <div class="label">个分类</div>
             </div>
           </div>
@@ -1829,8 +1829,8 @@
       <div class="data-card card-quote reveal">
         <h4>最近划线 <span class="en">Highlights</span></h4>
         <div class="quote-mark">“</div>
-        <p class="quote-text">然而那时的何塞·阿尔卡蒂奥·布恩迪亚对吉卜赛人的诚实尚缺乏信任，仍然拿一头骡子和一对山羊换了那两块磁铁。</p>
-        <div class="quote-src">—— 划自 <b>《百年孤独》</b> · 9月21日</div>
+        <p class="quote-text" id="recentQuoteText">正在加载…</p>
+        <div class="quote-src" id="recentQuoteSrc"></div>
       </div>
     </div>
   </section>
@@ -1848,10 +1848,24 @@
   <footer>
     <div class="fin">— Fin · To be continued —</div>
     合上这一页，还有下一本 · 我的书架
+    <div id="dataUpdatedAt" style="margin-top:8px;font-size:12px;color:var(--text-tertiary);"></div>
   </footer>
 
+  <div id="dataMissing" style="display:flex;position:fixed;inset:0;z-index:99999;background:rgba(244,239,230,.97);align-items:center;justify-content:center;padding:24px;text-align:center;">
+    <div style="max-width:460px;">
+      <h2 style="font-size:24px;margin-bottom:12px;color:var(--text-primary);">还没有书架数据</h2>
+      <p style="line-height:1.9;color:var(--text-secondary);">请在 agent 中输入「打开书架」获取最新数据。<br>首次使用需要先配置 <code>WEREAD_API_KEY</code>。</p>
+    </div>
+  </div>
+
+  <script src="data/weread-data.js"></script>
   <script>
-    const books = {{BOOKS_DATA}};
+    const DATA = window.WEREAD_DATA || {};
+    const books = Array.isArray(DATA.books) ? DATA.books : [];
+    const notes = Array.isArray(DATA.notes) ? DATA.notes : [];
+    if (window.WEREAD_DATA && Array.isArray(DATA.books)) {
+      document.getElementById('dataMissing').style.display = 'none';
+    }
 
     const config = {
       total: books.length,
@@ -1966,15 +1980,21 @@
     }
 
     // 本月每日阅读时长（秒），key 为日期
-    const monthlyReadData = {{HEATMAP_DATA}};
+    const monthlyReadData = DATA.heatmap || {};
 
     function renderHeatmap() {
       const calendar = document.getElementById('heatmapCalendar');
       if (!calendar) return;
 
-      // {{HEATMAP_YEAR}}年{{HEATMAP_MONTH}}月1日是星期四，索引4（日=0, 一=1, ... 四=4）
-      const firstDayWeekday = {{HEATMAP_FIRST_DAY}};
-      const daysInMonth = {{HEATMAP_DAYS}};
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth() + 1;
+      const firstDayWeekday = new Date(currentYear, currentMonth - 1, 1).getDay();
+      const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+      const monthLabel = document.getElementById('heatmapMonthLabel');
+      if (monthLabel) {
+        monthLabel.textContent = now.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+      }
       const maxSeconds = Math.max(...Object.values(monthlyReadData), 1);
 
       let html = '';
@@ -2383,7 +2403,74 @@
       wrap.addEventListener('dragstart', e => e.preventDefault());
     }
 
-    init();
+    function escapeHtmlText(text) {
+      const div = document.createElement('div');
+      div.textContent = text == null ? '' : String(text);
+      return div.innerHTML;
+    }
+
+    function formatNoteDate(timestamp) {
+      const value = Number(timestamp);
+      if (!value) return '';
+      const date = new Date(value * 1000);
+      if (Number.isNaN(date.getTime())) return '';
+      return `${date.getMonth() + 1}月${date.getDate()}日`;
+    }
+
+    function renderHeaderStats() {
+      const stats = DATA.stats || {};
+      const bookCount = document.getElementById('bookCount');
+      if (bookCount) bookCount.textContent = String(books.length);
+
+      const totalReadHours = document.getElementById('totalReadHours');
+      if (totalReadHours) {
+        totalReadHours.textContent = String(Math.round((Number(stats.totalReadTime) || 0) / 3600));
+      }
+
+      const readDays = document.getElementById('readDays');
+      if (readDays) readDays.textContent = String(Number(stats.readDays) || 0);
+
+      const finishedBooks = document.getElementById('finishedBooks');
+      if (finishedBooks) {
+        const finished = Number(stats.finishedCount);
+        finishedBooks.textContent = String(
+          Number.isFinite(finished) ? finished : books.filter((book) => Number(book.progress) >= 100).length
+        );
+      }
+    }
+
+    function renderRecentQuote() {
+      const card = document.querySelector('.card-quote');
+      const textEl = document.getElementById('recentQuoteText');
+      const srcEl = document.getElementById('recentQuoteSrc');
+      if (!card || !textEl || !srcEl) return;
+
+      const latest = notes
+        .filter((note) => note && note.type === 'bookmark' && note.content)
+        .sort((a, b) => (Number(b.createTime) || 0) - (Number(a.createTime) || 0))[0];
+
+      if (!latest) {
+        card.style.display = 'none';
+        return;
+      }
+
+      const title = String(latest.title || '').replace(/^《|》$/g, '');
+      textEl.textContent = latest.content;
+      srcEl.innerHTML = `—— 划自 <b>${escapeHtmlText(`《${title}》`)}</b> · ${escapeHtmlText(formatNoteDate(latest.createTime))}`;
+    }
+
+    function renderDataUpdatedAt() {
+      const el = document.getElementById('dataUpdatedAt');
+      if (!el || !DATA.generatedAt) return;
+      const date = new Date(DATA.generatedAt);
+      if (Number.isNaN(date.getTime())) return;
+      el.textContent = `数据更新于 ${date.toLocaleString('zh-CN', { hour12: false })}`;
+    }
+
+    renderHeaderStats();
+    renderRecentQuote();
+    renderDataUpdatedAt();
+    if (books.length > 0) init();
 
     // 导航滚动高亮
     function initNavHighlight() {
@@ -2440,7 +2527,7 @@
     initNavHighlight();
 
     // 阅读偏好环形图
-    const categoryData = {{CATEGORY_DATA}};
+    const categoryData = Array.isArray(DATA.preferences) ? DATA.preferences : [];
 
     function renderDonut() {
       const svg = document.getElementById('donutChart');
@@ -2448,6 +2535,8 @@
       if (!svg || !legend) return;
 
       const total = categoryData.reduce((s, c) => s + c.time, 0);
+      const donutTotalEl = document.getElementById('donutTotal');
+      if (donutTotalEl) donutTotalEl.textContent = String(categoryData.length);
       const circumference = 2 * Math.PI * 70;
       let offset = 0;
 
@@ -2488,7 +2577,7 @@
     renderDonut();
 
     // 猜你喜欢推荐数据
-    const recBooks = {{RECOMMEND_DATA}};
+    const recBooks = Array.isArray(DATA.recommend) ? DATA.recommend : [];
 
     function renderRecommend() {
       const scroll = document.getElementById('recScroll');
