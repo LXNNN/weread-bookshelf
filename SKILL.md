@@ -1,7 +1,7 @@
 ---
 name: weread-bookshelf
 description: 当用户要求打开或看看我的书架、打开便利贴墙、更新/刷新/同步微信读书数据、生成或初始化书架页面时使用。调用微信读书 API 获取最新数据，写入 data/weread-data.js，并打开静态 HTML 页面；不需要 Node.js、PowerShell 或额外的微信读书技能。
-version: 2.0.1
+version: 2.1.0
 ---
 
 # WeRead Bookshelf — 微信读书书架可视化
@@ -115,7 +115,11 @@ window.WEREAD_DATA = {
 - 业务参数必须**平铺在 body 顶层**，和 `api_name`、`skill_version` 同级，不要包在 `params` 里。
 - `skill_version` 使用 `1.0.4`。
 - 每次请求后检查 `errcode`；不为 0 时报告 `errmsg`。
-- 连续请求间隔 150–300ms，避免触发限流。
+- 独立接口可以并发，但同一时间最多 **3 个 API 请求在途**；每个请求的启动时间至少间隔 **200ms**（180–250ms 都可以）。不要为了快把启动间隔压到 0。
+- 多页接口（`/user/notebooks`、`/review/list/mine`）的翻页按顺序执行；不同书、不同接口可以并发。
+- 遇到 HTTP 429、`errcode` 提示限流或连续失败时，把并发降到 1–2，并按 1s、2s、4s 退避重试；恢复后再回到 3 路。
+- 如果运行环境不支持并发，就退回串行，但仍保持 200ms 左右的请求间隔。
+- 同一次更新里，相同接口和参数不要重复请求；能从上一次 `data/weread-data.js` 复用的数据优先复用（见第 3 步章节缓存）。
 - `/shelf/sync`、`/user/notebooks` 失败时停止整个更新；单本书的进度、划线、想法、章节失败时记录警告并跳过。
 
 示例：
@@ -126,6 +130,8 @@ curl -sS "https://i.weread.qq.com/api/agent/gateway" \
   -H "Content-Type: application/json" \
   -d '{"api_name":"/shelf/sync","skill_version":"1.0.4"}'
 ```
+
+**并发调度建议**：把 `/shelf/sync`、`/user/notebooks`、月度/总体 `/readdata/detail`、`/book/recommend` 作为第一批，用 3 路请求池同时启动；书架和笔记本返回后，再把单本书的进度、划线、想法、章节任务放入同一个请求池。第一批里除 `/shelf/sync` 和 `/user/notebooks` 外的接口失败时只记录警告，不阻断更新。
 
 ### 1. 书架
 
@@ -144,7 +150,8 @@ curl -sS "https://i.weread.qq.com/api/agent/gateway" \
 ```
 
 - 按 `readUpdateTime` 降序排列。
-- 逐本调用 `/book/getprogress`（参数 `bookId`），把回包 `book.progress` 写入 `progress`；返回 0 也要写入。
+- **进度优先复用 `/user/notebooks` 的 `readingProgress`**：有笔记的书直接用它作为 `progress`（返回 0 也有效），不要再调用 `/book/getprogress`。
+- 只对“在书架上、但没有出现在 `/user/notebooks` 结果里”的书调用 `/book/getprogress`（参数 `bookId`），把回包 `book.progress` 写入 `progress`；这些请求也放进 3 路请求池。`readingProgress` 字段缺失（不是 0）时，才回退到 `/book/getprogress`。
 - 如果存在 `data/title_mapping.json`，用它替换拼音书名。
 
 ### 2. 笔记
@@ -159,6 +166,10 @@ curl -sS "https://i.weread.qq.com/api/agent/gateway" \
 - 合并所有页的 `books[]`，按 `bookId` 去重。
 
 对每本有笔记的书：
+
+**并发**：把每本书的 `/book/bookmarklist` 和 `/review/list/mine` 作为独立任务放进同一个 3 路请求池；不同书可以同时取。每本书的结果先存到该书自己的临时数组，最后按 `/user/notebooks` 的书顺序合并，每本书内保持“先划线、后想法”。不要按请求完成顺序直接拼接，否则便利贴墙的顺序每次更新都会变。
+
+**跳过空请求**：`/user/notebooks` 的 `noteCount` 表示划线数量，`reviewCount` 表示想法数量。`noteCount` 为 0 时跳过 `/book/bookmarklist`；`reviewCount` 为 0 时跳过 `/review/list/mine`；字段缺失（不是 0）才发起请求。
 
 1. 调用 `/book/bookmarklist`（参数 `bookId`）。`updated[]` 的每条划线生成：
 
@@ -197,7 +208,7 @@ curl -sS "https://i.weread.qq.com/api/agent/gateway" \
 
 ### 3. 章节与进度
 
-对每本有笔记的书调用 `/book/chapterinfo`（参数 `bookId`），把 `chapters[]` 转成 `chapterUid → title` 的对象，并带上该书在书架里的进度：
+**章节缓存**：先读取上一版 `data/weread-data.js` 的 `chapterProgress[bookId].chapters`。如果存在且非空，直接复用，**不要调用 `/book/chapterinfo`**；只对新增的有笔记书籍、或旧数据中没有章节缓存的书调用 `/book/chapterinfo`（参数 `bookId`），把 `chapters[]` 转成 `chapterUid → title` 的对象。章节请求也放进 3 路请求池。当前进度用本次得到的 `progress` 覆盖缓存里的旧进度；需要强制刷新某本书的章节时，删除旧数据中对应条目后重新更新。结构如下：
 
 ```json
 {
@@ -211,9 +222,11 @@ curl -sS "https://i.weread.qq.com/api/agent/gateway" \
 }
 ```
 
-`chapters` 的 key 必须是字符串。进度取书架数据中同一 `bookId` 的 `progress`。
+`chapters` 的 key 必须是字符串。进度取本次数据中同一 `bookId` 的 `progress`（有笔记的书优先用 `/user/notebooks` 的 `readingProgress`）。
 
 ### 4. 热力图、偏好与统计
+
+月度、总体和推荐接口与书架/笔记本互不依赖，放在第一批并发请求里一起启动；不要等笔记全部取完再串行调用。
 
 调用 `/readdata/detail`，`mode` 为 `monthly`：
 
@@ -268,7 +281,7 @@ key 是当月第几天，不带前导零。
 
 ### 6. 封面（增量更新）
 
-封面目录：`data/covers/`。**每次更新前先扫描目录，只下载本地没有的封面，不要每次全量重新下载。**
+封面目录：`data/covers/`。**每次更新前先扫描目录，只下载本地没有的封面，不要每次全量重新下载。** 封面下载最多 **4 个并发**，不要一张一张串行等待；先完成 API 取数，再并发处理封面。
 
 文件命名必须稳定：
 
@@ -283,7 +296,7 @@ key 是当月第几天，不带前导零。
 1. 用当前书架的 `bookId`、推荐的 `bookId`，以及笔记中仍有记录但已不在书架上的 `bookId`，生成本次需要的封面集合。
 2. 对每个 `bookId`，先查找 `data/covers/<bookId>.*`（任意支持的扩展名）。找到且文件大小大于 0 就直接复用，写入 `cover` 和 `covers[书名]`，**不要重新下载**；0 字节文件视为缺失。
 3. 找不到时再看旧版 `data/weread-data.js` 的 `covers[书名]`：如果它指向的本地文件仍然存在，可以复用，并尽量把它重命名为 `<bookId>.<ext>`。这样旧版 `rec-XX.*` 不需要重新下载。
-4. 只有以上都找不到时才下载：
+4. 只有以上都找不到时才下载；多个下载任务最多 4 个并发：
    ```bash
    mkdir -p data/covers
    curl -L --fail --max-time 20 "封面 URL" -o "data/covers/935536.jpg"
@@ -308,10 +321,11 @@ key 是当月第几天，不带前导零。
 
 - 删除不在 `usedCoverFiles` 中的文件，包括已从书架删除且没有任何笔记引用的书，以及旧版遗留的 `rec-XX.*`
 - 如果一本书已从书架删除，但便利贴里还有它的笔记，保留它的封面，供弹窗使用
+- 推荐列表会轮换，旧推荐封面可能被清理、新推荐封面会重新下载；这是接口特性，保持增量逻辑即可，不要因此清空整个目录或跳过书架/笔记封面
 - 不要按修改时间清理，也不要每次清空整个目录；只删除确认未被本次数据引用的文件
 - 如果 `data.js` 写入失败，不要删除任何封面，保留上一版可用数据
 
-这样正常情况下每次只下载新增书籍的封面，更新会快很多。
+这样书架和笔记封面正常只下载新增；推荐书轮换时会有少量新增封面，更新仍然很快。
 
 ### 7. 写 `data/weread-data.js`
 
@@ -364,6 +378,12 @@ start "" "我的书架-浅色版.html"
 macOS / Linux 用 `open` 或 `xdg-open`。
 
 如果页面已经开着，提醒用户刷新（F5）。
+
+### 更新耗时
+
+- 典型规模（25 本书、86 条笔记）本机测试：串行约 22 秒，使用本章的 3 路并发 + 进度复用 + 章节缓存 + 空请求跳过后约 7–9 秒；网络和书籍数量不同会有差异。
+- 首次运行需要补章节和封面，会慢一些；后续命中章节缓存和封面增量，通常更快。
+- 如果整次更新明显超过 30 秒，优先检查：是否仍然逐本串行请求、是否对每本书都重复调用了 `/book/getprogress` 或 `/book/chapterinfo`。
 
 ## 数据文件契约
 

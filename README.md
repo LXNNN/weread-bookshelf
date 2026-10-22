@@ -5,6 +5,7 @@
 ## ✨ 功能特点
 
 - 固定 HTML 模板 + 独立数据文件，无需 Node.js、PowerShell 或本地服务器
+- 并发取数 + 阅读进度复用 + 章节缓存，重复打开更快
 - 封面按 `bookId` 增量更新，已有封面不会重复下载
 - 页面与数据均可离线使用
 
@@ -83,8 +84,8 @@ git clone https://github.com/LXNNN/weread-bookshelf.git ~/.agents/skills/weread-
 
 agent 会：
 
-1. 调用微信读书 API 获取最新数据
-2. 对比 `data/covers/` 与当前书架，只下载新增书籍的封面
+1. 并行调用微信读书 API 获取最新数据，复用已有阅读进度和章节缓存
+2. 对比 `data/covers/` 与当前书架，只下载新增书籍的封面（多张封面并发下载）
 3. 写入 `data/weread-data.js`，并清理已删除且没有笔记引用的封面
 4. 打开 `我的书架-浅色版.html`
 
@@ -103,6 +104,12 @@ agent 会：
 
 首次使用或数据文件缺失时，页面会显示提示，而不会白屏。
 
+### 更新速度
+
+更新数据时使用 3 路 API 请求池：独立接口同时启动，每个请求启动间隔约 200ms，避免触发限流。有笔记的书直接复用 `/user/notebooks` 的 `readingProgress`，不再逐本请求进度；章节标题优先复用上一版 `chapterProgress`，只请求新增书籍；`noteCount` / `reviewCount` 为 0 的划线或想法接口直接跳过；封面最多 4 张并发下载。
+
+本机 25 本书、86 条笔记测试：串行约 22 秒，优化后约 7–9 秒（网络和书籍数量不同会有差异）。首次运行或新增书籍较多时会慢一些。
+
 ### 封面增量更新
 
 封面统一按 `bookId` 命名（如 `data/covers/935536.jpg`），书架和推荐共用同一份文件。每次更新时：
@@ -112,6 +119,8 @@ agent 会：
 3. 旧版 `data/weread-data.js` 里的 `covers[书名]` 如果指向仍然存在的本地文件，会复用并尽量重命名为 `<bookId>.<ext>`，因此旧版 `rec-XX` 封面不需要重新下载。
 4. `data.js` 写入成功后，删除已经从书架消失、且没有任何笔记引用的封面；如果便利贴里还有这本书的笔记，封面会保留。
 5. `data.js` 写入失败时不会删除任何封面，避免破坏上一版可用数据。
+
+推荐列表会轮换，因此推荐书的封面可能有少量新增和清理；书架和笔记封面仍严格按 `bookId` 增量复用，不会重复下载。
 
 ## 📁 目录结构
 
@@ -163,11 +172,11 @@ A: 在 `data/note-heights.json` 里按 `createTime` 配置高度，然后让 age
 通过微信读书 Agent API Gateway 获取：
 
 - `/shelf/sync` — 书架书籍列表
-- `/book/getprogress` — 阅读进度
+- `/book/getprogress` — 阅读进度（仅书架中没有笔记记录的书；有笔记的书复用 `/user/notebooks` 的 `readingProgress`）
 - `/user/notebooks` — 有笔记的书籍
 - `/book/bookmarklist` — 划线内容
 - `/review/list/mine` — 想法/点评
-- `/book/chapterinfo` — 章节目录
+- `/book/chapterinfo` — 章节目录（优先复用上一版缓存，只请求新增书籍）
 - `/readdata/detail` — 阅读统计和偏好
 - `/book/recommend` — 推荐好书
 
