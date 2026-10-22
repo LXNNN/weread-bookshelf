@@ -1119,6 +1119,32 @@ const THOUGHT_VARIANTS = [
   { kind: 'standard', cls: 'note-yellow-bright note-tall', pins: ['pin-white'] }
 ];
 
+// 黄色/橙色只在一半的循环中出现，另一半换成图片里的五种便利贴颜色
+const ALT_COLORS = [
+  'note-mint',
+  'note-cream',
+  'note-pink',
+  'note-blue-deep',
+  'note-green'
+];
+
+function isYellowOrangeVariant(variant) {
+  const classes = variant.cls.split(/\s+/);
+  return classes.includes('note-yellow-bright') || classes.includes('note-orange');
+}
+
+function pickVariant(note, index) {
+  const pool = note.type === 'thought' ? THOUGHT_VARIANTS : NOTE_VARIANTS;
+  const variant = pool[index % pool.length];
+  const cycle = Math.floor(index / pool.length);
+  if (cycle % 2 === 0 || !isYellowOrangeVariant(variant)) return variant;
+
+  const sizeMatch = variant.cls.match(/\bnote-(tiny|sm|md|lg|wide|tall)\b/);
+  const sizeClass = sizeMatch ? sizeMatch[0] : 'note-md';
+  const colorClass = ALT_COLORS[index % ALT_COLORS.length];
+  return { ...variant, cls: `${colorClass} ${sizeClass}` };
+}
+
 // 布局占几列：横贴和大方块占 2 列，其余保持窄贴
 function variantSpan(variant) {
   return /\bnote-(lg|wide)\b/.test(variant.cls) ? 2 : 1;
@@ -1198,8 +1224,7 @@ function renderWall(data) {
   const colW = mobile ? wallWidth : (wallWidth - gap * (cols - 1)) / cols;
 
   const elements = data.map((note, i) => {
-    const pool = note.type === 'thought' ? THOUGHT_VARIANTS : NOTE_VARIANTS;
-    const variant = pool[i % pool.length];
+    const variant = pickVariant(note, i);
     const span = mobile ? 1 : Math.min(variantSpan(variant), cols);
     const el = document.createElement('div');
     el.className = `note ${variant.cls}${note.type === 'thought' ? ' is-thought' : ''}`;
