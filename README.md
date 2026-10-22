@@ -1,8 +1,12 @@
 # WeRead Bookshelf — 微信读书书架可视化
 
-把微信读书数据生成为两个可直接打开的本地 HTML 页面，离线可用。
+把微信读书数据生成为两个可直接打开的本地 HTML 页面，离线可用。页面与数据分离：HTML 是固定模板，更新时只写 `data/weread-data.js` 和封面，不需要重新生成页面。
 
 ## ✨ 功能特点
+
+- 固定 HTML 模板 + 独立数据文件，无需 Node.js、PowerShell 或本地服务器
+- 封面按 `bookId` 增量更新，已有封面不会重复下载
+- 页面与数据均可离线使用
 
 ### 📚 我的书架页面
 - 扇形封面流（Coverflow 效果）
@@ -54,7 +58,23 @@ export WEREAD_API_KEY="wrk-你的APIKey"
 
 设置后重开终端生效。不要把 key 写进仓库或发到聊天中。
 
-### 3. 使用
+### 3. 安装技能
+
+下载或克隆本仓库，把整个 `weread-bookshelf` 目录放到 agent 的技能目录。常见位置：
+
+- 通用 Agent Skills：`~/.agents/skills/weread-bookshelf`
+- Claude Code：`~/.claude/skills/weread-bookshelf`
+- Windows：`%USERPROFILE%\.agents\skills\weread-bookshelf`
+
+也可以直接克隆到技能目录：
+
+```bash
+git clone https://github.com/LXNNN/weread-bookshelf.git ~/.agents/skills/weread-bookshelf
+```
+
+目录中至少要有 `SKILL.md` 和两个 HTML 页面；`data/` 会在第一次更新时自动创建，不需要手动准备。安装后重启 agent，或按所用 agent 的方式重新加载技能。
+
+### 4. 使用
 
 在 agent 对话中直接说：
 
@@ -63,8 +83,8 @@ export WEREAD_API_KEY="wrk-你的APIKey"
 agent 会：
 
 1. 调用微信读书 API 获取最新数据
-2. 下载缺失的封面到 `data/covers/`
-3. 写入 `data/weread-data.js`
+2. 对比 `data/covers/` 与当前书架，只下载新增书籍的封面
+3. 写入 `data/weread-data.js`，并清理已删除且没有笔记引用的封面
 4. 打开 `我的书架-浅色版.html`
 
 说 **“打开便利贴”** 会更新数据并打开便利贴页面。  
@@ -80,9 +100,17 @@ agent 会：
 
 加载本地数据文件。更新时只写 `data/weread-data.js` 和封面，不需要重新生成 HTML，也不需要任何构建工具。
 
-封面按 `bookId` 增量更新：已有封面直接复用，只下载新增书籍的封面；从书架删除且没有任何笔记引用的封面会自动清理。
-
 首次使用或数据文件缺失时，页面会显示提示，而不会白屏。
+
+### 封面增量更新
+
+封面统一按 `bookId` 命名（如 `data/covers/935536.jpg`），书架和推荐共用同一份文件。每次更新时：
+
+1. 先扫描 `data/covers/`，已有且非空的封面直接复用，不重新下载。
+2. 只下载本地没有的新书封面；下载失败会保留远程 URL，下次只重试缺失项。
+3. 旧版 `data/weread-data.js` 里的 `covers[书名]` 如果指向仍然存在的本地文件，会复用并尽量重命名为 `<bookId>.<ext>`，因此旧版 `rec-XX` 封面不需要重新下载。
+4. `data.js` 写入成功后，删除已经从书架消失、且没有任何笔记引用的封面；如果便利贴里还有这本书的笔记，封面会保留。
+5. `data.js` 写入失败时不会删除任何封面，避免破坏上一版可用数据。
 
 ## 📁 目录结构
 
