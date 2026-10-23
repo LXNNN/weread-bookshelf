@@ -133,7 +133,6 @@ weread-bookshelf/
 └── data/                       # 个人数据（git 忽略）
     ├── weread-data.js          # 页面运行时数据
     ├── covers/                 # 本地封面
-    ├── note-heights.json       # 可选：个别便利贴固定高度
     └── title_mapping.json      # 可选：拼音书名映射
 ```
 
@@ -163,9 +162,6 @@ A: 可以。取数用 `curl` 或 agent 的 HTTP 工具，页面是静态 HTML，
 
 **Q: 为什么没有定时自动更新？**  
 A: 本技能按“对话中触发”设计，不注册系统计划任务。需要刷新时说“更新数据/刷新书架”。
-
-**Q: 怎么调整某张便利贴的高度？**  
-A: 在 `data/note-heights.json` 里按 `createTime` 配置高度，然后让 agent 重新更新数据。没有配置的便利贴按内容自适应。
 
 ## 📄 数据来源
 

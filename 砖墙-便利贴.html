@@ -1018,71 +1018,6 @@ function formatDate(ts) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-// 固定高度的便利贴：内容少时自动放大字号，内容多时自动增加显示行数
-function fitTextToHeight(el, height) {
-  const style = getComputedStyle(el);
-  const contentHeight =
-    height -
-    (parseFloat(style.borderTopWidth) || 0) -
-    (parseFloat(style.paddingTop) || 0) -
-    (parseFloat(style.paddingBottom) || 0);
-
-  // 紫色边框贴：让内部白色标签跟着长高，并按高度增加文字行数
-  const frameLabel = el.querySelector('.inner-label');
-  if (frameLabel) {
-    frameLabel.style.maxHeight = 'none';
-    frameLabel.style.height = `${contentHeight}px`;
-    const labelStyle = getComputedStyle(frameLabel);
-    const lineHeight = parseFloat(labelStyle.lineHeight);
-    const span = frameLabel.querySelector('span');
-    if (!lineHeight || !span) return;
-    const labelSpace =
-      contentHeight -
-      (parseFloat(labelStyle.paddingTop) || 0) -
-      (parseFloat(labelStyle.paddingBottom) || 0);
-    span.style.webkitLineClamp = String(Math.max(1, Math.floor((labelSpace + 1) / lineHeight)));
-    return;
-  }
-
-  const textEl = el.querySelector('.note-text');
-  if (!textEl) return;
-  const titleEl = el.querySelector('.title');
-  let titleHeight = 0;
-  if (titleEl) {
-    titleHeight =
-      titleEl.getBoundingClientRect().height +
-      (parseFloat(getComputedStyle(titleEl).marginBottom) || 0);
-  }
-  const available = contentHeight - titleHeight;
-
-  // 先取消行数限制，量一下内容实际需要的高度；放得下且还有余量时逐步放大字号
-  const baseFont = parseFloat(style.fontSize) || 14;
-  let fontSize = baseFont;
-  textEl.style.webkitLineClamp = 'unset';
-  let textHeight = textEl.getBoundingClientRect().height;
-  if (textHeight > 0 && textHeight <= available) {
-    for (let size = baseFont + 0.5; size <= 18; size += 0.5) {
-      el.style.fontSize = `${size}px`;
-      const nextHeight = textEl.getBoundingClientRect().height;
-      if (nextHeight > available) break;
-      fontSize = size;
-      textHeight = nextHeight;
-    }
-  }
-  // 内容太短时放大字号也填不满，保持原字号，避免正文比标题还大
-  if (fontSize > baseFont && textHeight < available * 0.5) {
-    fontSize = baseFont;
-    el.style.fontSize = `${baseFont}px`;
-    textHeight = textEl.getBoundingClientRect().height;
-  }
-  el.style.fontSize = `${fontSize}px`;
-
-  const lineHeight = parseFloat(getComputedStyle(el).lineHeight);
-  if (!lineHeight) return;
-  const lines = Math.max(1, Math.floor((available + 1) / lineHeight));
-  textEl.style.webkitLineClamp = String(lines);
-}
-
 const NOTE_VARIANTS = [
   { kind: 'standard', cls: 'note-pink note-md', pins: ['pin-gold pin-left'] },
   { kind: 'standard', cls: 'note-purple note-sm', pins: ['pin-white'] },
@@ -1200,42 +1135,246 @@ function updateFooter(data) {
   footerStats.textContent = `${bookmarkCount} 条划线 · ${thoughtCount} 条想法 · 来自 ${bookCount} 本书`;
 }
 
-function renderWall(data) {
-  currentNotes = data;
-  wall.innerHTML = '';
-  wall.style.width = '';
-  totalCountEl.textContent = data.length;
-  updateFooter(data);
+// ===== 便利贴墙排版 =====
+// 每列记录已占用的纵向区间（区间底部已含贴间距）。宽贴落位时允许小幅下移，
+// 优先选择两列高度更接近的位置，避免把窄小的凹槽封死在贴纸之间。
+// 每批还会用几种窗口做局部重排：只在本批内按真实高度调整顺序，跨批顺序不变。
+const BATCH_SIZE_DESKTOP = 120;
+const BATCH_SIZE_MOBILE = 30;
+const LOAD_AHEAD = 1200;
+// 候选重排窗口；窗口越大，局部换序范围越大
+const SORT_WINDOWS = [0, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 96];
+const HOLE_TARGET = 40; // 达到这个最大空隙后，优先选重排更少的窗口
+const PLACE_TOL = 60;   // 宽贴允许下移这么多，去找更贴合列高的位置
+let wallState = null;
+let currentPreserveOrder = false;
 
-  if (data.length === 0) {
-    wall.style.height = 'auto';
-    wall.innerHTML = '<div class="empty-state">没有找到相关便利贴</div>';
+// 把 [start, end) 合并进有序、互不重叠的区间列表
+function insertOccupied(list, start, end) {
+  let lo = 0;
+  let hi = list.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (list[mid][1] < start) lo = mid + 1;
+    else hi = mid;
+  }
+  let newStart = start;
+  let newEnd = end;
+  let i = lo;
+  while (i < list.length && list[i][0] <= newEnd) {
+    if (list[i][0] < newStart) newStart = list[i][0];
+    if (list[i][1] > newEnd) newEnd = list[i][1];
+    i++;
+  }
+  list.splice(lo, i - lo, [newStart, newEnd]);
+}
+
+// 在 from..from+span 这几列里，找到能放下 need 高度的最靠上位置
+function firstFitTop(occupied, from, span, need) {
+  let y = 0;
+  for (;;) {
+    let blockedUntil = y;
+    for (let k = 0; k < span; k++) {
+      const list = occupied[from + k];
+      let lo = 0;
+      let hi = list.length;
+      while (lo < hi) {
+        const mid = (lo + hi) >> 1;
+        if (list[mid][1] <= y) lo = mid + 1;
+        else hi = mid;
+      }
+      for (let i = lo; i < list.length && list[i][0] < y + need; i++) {
+        if (list[i][1] > blockedUntil) blockedUntil = list[i][1];
+      }
+    }
+    if (blockedUntil <= y) return y;
+    y = blockedUntil;
+  }
+}
+
+// 宽贴放在 top 时，会在跨过的列里封住多高的空隙
+function sealedGap(state, c, span, top) {
+  let maxGap = 0;
+  for (let k = 0; k < span; k++) {
+    const list = state.occupied[c + k];
+    let lo = 0;
+    let hi = list.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (list[mid][1] <= top) lo = mid + 1;
+      else hi = mid;
+    }
+    const gap = lo === 0 ? top : top - list[lo - 1][1] + state.gap;
+    if (gap > maxGap) maxGap = gap;
+  }
+  return maxGap;
+}
+
+function findPlacement(state, span, height) {
+  const need = height + state.gap;
+  const candidates = [];
+  let bestTop = Infinity;
+  for (let c = 0; c <= state.cols - span; c++) {
+    const top = firstFitTop(state.occupied, c, span, need);
+    candidates.push({ c, top, sealed: sealedGap(state, c, span, top) });
+    if (top < bestTop) bestTop = top;
+  }
+  let best = null;
+  for (let i = 0; i < candidates.length; i++) {
+    const cand = candidates[i];
+    if (cand.top > bestTop + PLACE_TOL + 0.5) continue;
+    if (
+      !best ||
+      cand.sealed < best.sealed - 0.5 ||
+      (Math.abs(cand.sealed - best.sealed) <= 0.5 &&
+        (cand.top < best.top - 0.5 ||
+          (Math.abs(cand.top - best.top) <= 0.5 && cand.c < best.c)))
+    ) {
+      best = cand;
+    }
+  }
+  for (let k = 0; k < span; k++) {
+    insertOccupied(state.occupied[best.c + k], best.top, best.top + need);
+  }
+  return { top: best.top, left: best.c * (state.colW + state.gap) };
+}
+
+function cloneLayoutState(state) {
+  return {
+    cols: state.cols,
+    colW: state.colW,
+    gap: state.gap,
+    wallWidth: state.wallWidth,
+    occupied: state.occupied.map((list) => list.map((iv) => [iv[0], iv[1]])),
+    maxBottom: state.maxBottom,
+    maxRight: state.maxRight,
+  };
+}
+
+// 统计墙面上的最大空隙和空隙面积（空隙高度含贴纸间距）
+function measureHoles(state) {
+  let maxGap = 0;
+  let area = 0;
+  for (let c = 0; c < state.cols; c++) {
+    const list = state.occupied[c];
+    let prevBottom = null;
+    for (let i = 0; i < list.length; i++) {
+      const gap = prevBottom === null
+        ? list[i][0]
+        : list[i][0] - prevBottom + state.gap;
+      if (gap > maxGap) maxGap = gap;
+      if (gap > 0) area += gap * state.colW;
+      prevBottom = list[i][1];
+    }
+  }
+  return { maxGap, area };
+}
+
+function orderForWindow(n, windowSize, heights) {
+  const order = new Array(n);
+  for (let k = 0; k < n; k++) order[k] = k;
+  if (windowSize > 0) {
+    for (let w = 0; w < n; w += windowSize) {
+      const seg = order.slice(w, w + windowSize);
+      seg.sort((a, b) => heights[b] - heights[a] || a - b);
+      order.splice(w, seg.length, ...seg);
+    }
+  }
+  return order;
+}
+
+function simulateOrder(state, items, heights, order) {
+  const sim = cloneLayoutState(state);
+  for (let i = 0; i < order.length; i++) {
+    const k = order[i];
+    const height = heights[k];
+    const pos = findPlacement(sim, items[k].span, height);
+    if (pos.top + height > sim.maxBottom) sim.maxBottom = pos.top + height;
+    const right = pos.left + items[k].span * sim.colW + (items[k].span - 1) * sim.gap;
+    if (right > sim.maxRight) sim.maxRight = right;
+  }
+  const holes = measureHoles(sim);
+  return { maxGap: holes.maxGap, area: holes.area, maxBottom: sim.maxBottom };
+}
+
+// 在几种窗口大小里各模拟一遍，选空洞最小、重排最少的一种
+function pickBestOrder(state, items, heights) {
+  const n = items.length;
+  if (state.preserveOrder || n < 8) return orderForWindow(n, 0, heights);
+
+  const windows = SORT_WINDOWS.filter((w) => w === 0 || w < n);
+  if (windows[windows.length - 1] !== n) windows.push(n);
+
+  const results = [];
+  for (let i = 0; i < windows.length; i++) {
+    const W = windows[i];
+    const order = orderForWindow(n, W, heights);
+    const r = simulateOrder(state, items, heights, order);
+    results.push({
+      W,
+      order,
+      maxGap: r.maxGap,
+      area: r.area,
+      maxBottom: r.maxBottom,
+    });
+  }
+
+  let bestGap = Infinity;
+  for (let i = 0; i < results.length; i++) {
+    if (results[i].maxGap < bestGap) bestGap = results[i].maxGap;
+  }
+  let pool;
+  if (bestGap <= HOLE_TARGET) {
+    const limit = Math.max(HOLE_TARGET, bestGap + 8);
+    pool = results.filter((r) => r.maxGap <= limit);
+    pool.sort((a, b) =>
+      a.W - b.W || a.maxGap - b.maxGap || a.area - b.area || a.maxBottom - b.maxBottom
+    );
+  } else {
+    pool = results.slice().sort((a, b) =>
+      a.maxGap - b.maxGap || a.area - b.area || a.maxBottom - b.maxBottom || a.W - b.W
+    );
+  }
+  return pool[0].order;
+}
+
+function finalizeLayout(state) {
+  state.done = true;
+  if (state.mobile) return;
+  if (state.holdHeight) {
+    state.holdHeight = 0;
+    wall.style.height = `${state.maxBottom + 40}px`;
+  }
+  // 搜索结果较少时收窄墙宽并居中，左右两边仍然对齐
+  if (state.maxRight > 0 && state.maxRight < state.wallWidth - 1) {
+    wall.style.width = `${state.maxRight}px`;
+  }
+}
+
+function appendBatch(state) {
+  if (state !== wallState || state.done) return;
+  const data = state.data;
+  const start = state.next;
+  if (start >= data.length) {
+    finalizeLayout(state);
     return;
   }
+  const end = Math.min(start + state.batchSize, data.length);
+  const fragment = document.createDocumentFragment();
+  const items = [];
 
-  const mobile = window.innerWidth <= 768;
-  if (mobile) {
-    wall.style.height = 'auto';
-  }
-
-  const gap = 8;
-  const wallWidth = wall.clientWidth || Math.min(1100, window.innerWidth - 40);
-  const cols = mobile ? 1 : Math.max(4, Math.min(8, Math.round(wallWidth / 140)));
-  const colW = mobile ? wallWidth : (wallWidth - gap * (cols - 1)) / cols;
-
-  const elements = data.map((note, i) => {
+  for (let i = start; i < end; i++) {
+    const note = data[i];
     const variant = pickVariant(note, i);
-    const span = mobile ? 1 : Math.min(variantSpan(variant), cols);
+    const span = state.mobile ? 1 : Math.min(variantSpan(variant), state.cols);
     const el = document.createElement('div');
     el.className = `note ${variant.cls}${note.type === 'thought' ? ' is-thought' : ''}`;
     el.style.visibility = 'hidden';
     el.style.zIndex = String(i + 1);
     el.dataset.span = String(span);
-    if (!mobile) {
-      el.style.width = `${span * colW + (span - 1) * gap}px`;
+    if (!state.mobile) {
+      el.style.width = `${span * state.colW + (span - 1) * state.gap}px`;
     }
-    const fixedHeight = Number(note.height) || 0;
-    if (fixedHeight) el.style.height = `${fixedHeight}px`;
 
     const badge = note.type === 'thought' && variant.kind !== 'standard' && variant.kind !== 'grid'
       ? '<span class="thought-badge">想法</span>'
@@ -1243,47 +1382,131 @@ function renderWall(data) {
 
     el.innerHTML = badge + renderVariant(note, variant);
     el.addEventListener('click', () => openModal(note));
-    wall.appendChild(el);
-    if (fixedHeight) fitTextToHeight(el, fixedHeight);
-    return el;
-  });
-
-  if (!mobile) {
-    // 等高列瀑布流：普通贴占 1 列，横贴/大方块占 2 列；按数据顺序放进当前最矮的列
-    // 不设条数上限，新增笔记继续向下排
-    const colHeights = new Array(cols).fill(0);
-    elements.forEach((el) => {
-      const span = Math.min(Number(el.dataset.span) || 1, cols);
-      let bestLeft = 0;
-      let bestTop = Infinity;
-      for (let c = 0; c <= cols - span; c++) {
-        let top = 0;
-        for (let k = 0; k < span; k++) top = Math.max(top, colHeights[c + k]);
-        if (top < bestTop - 0.5) {
-          bestTop = top;
-          bestLeft = c;
-        }
-      }
-      el.style.left = `${bestLeft * (colW + gap)}px`;
-      el.style.top = `${bestTop}px`;
-      // 用小数高度参与排版，避免 offsetHeight 取整导致列高误差
-      const packHeight = el.getBoundingClientRect().height;
-      const bottom = bestTop + packHeight;
-      for (let k = 0; k < span; k++) colHeights[bestLeft + k] = bottom + gap;
-    });
-    const maxBottom = Math.max(...colHeights) - gap;
-    const maxRight = Math.max(
-      ...elements.map((el) => parseFloat(el.style.left) + el.getBoundingClientRect().width),
-      0
-    );
-    // 搜索结果较少时收窄墙宽并居中，左右两边仍然对齐
-    if (maxRight > 0 && maxRight < wallWidth - 1) {
-      wall.style.width = `${maxRight}px`;
-    }
-    wall.style.height = `${maxBottom + 40}px`;
+    fragment.appendChild(el);
+    items.push({ el, span });
   }
 
-  elements.forEach((el) => { el.style.visibility = 'visible'; });
+  wall.appendChild(fragment);
+
+  // 一个批次只量一次高度，避免逐贴读取触发重复布局
+  const heights = new Array(items.length);
+  for (let k = 0; k < items.length; k++) {
+    heights[k] = items[k].el.getBoundingClientRect().height;
+  }
+
+  if (!state.mobile) {
+    // 先模拟几种局部顺序，选空洞最少的一种；只在本批内换序，跨批顺序不变
+    const order = pickBestOrder(state, items, heights);
+    for (let oi = 0; oi < order.length; oi++) {
+      const k = order[oi];
+      const item = items[k];
+      const height = heights[k];
+      const pos = findPlacement(state, item.span, height);
+      item.el.style.left = `${pos.left}px`;
+      item.el.style.top = `${pos.top}px`;
+      if (pos.top + height > state.maxBottom) state.maxBottom = pos.top + height;
+      const right = pos.left + item.span * state.colW + (item.span - 1) * state.gap;
+      if (right > state.maxRight) state.maxRight = right;
+    }
+    // 重排时先留住旧高度，等新布局覆盖到当前视口再放开，避免页面跳回顶部
+    if (state.holdHeight && state.fillTo && state.maxBottom >= state.fillTo) {
+      state.holdHeight = 0;
+    }
+    const nextHeight = state.maxBottom + 40;
+    wall.style.height = `${state.holdHeight ? Math.max(state.holdHeight, nextHeight) : nextHeight}px`;
+  }
+
+  for (let k = 0; k < items.length; k++) {
+    items[k].el.style.visibility = 'visible';
+  }
+  state.next = end;
+  if (state.next >= data.length) finalizeLayout(state);
+}
+
+function nearBottom(state) {
+  const rect = wall.getBoundingClientRect();
+  const contentBottom = state.mobile ? rect.bottom : rect.top + state.maxBottom + 40;
+  return contentBottom <= window.innerHeight + LOAD_AHEAD;
+}
+
+function scheduleBatch(state) {
+  if (state !== wallState || state.done || state.loading) return;
+  state.loading = true;
+  // 用定时器而不是 requestAnimationFrame：后台标签页里 rAF 会暂停，加载不能卡死
+  setTimeout(() => {
+    if (state !== wallState) return;
+    state.loading = false;
+    appendBatch(state);
+    maybeLoadMore();
+  }, 16);
+}
+
+function maybeLoadMore() {
+  const state = wallState;
+  if (!state || state.done || state.loading) return;
+  if (state.fillTo && state.maxBottom < state.fillTo) {
+    scheduleBatch(state);
+    return;
+  }
+  if (nearBottom(state)) scheduleBatch(state);
+}
+
+function renderWall(data, options) {
+  currentNotes = data;
+  currentPreserveOrder = !!(options && options.preserveOrder);
+  const keepHeight = !!(options && options.keepHeight);
+  const mobile = window.innerWidth <= 768;
+  const prevHeight = keepHeight && !mobile ? wall.getBoundingClientRect().height : 0;
+  const wallTop = wall.getBoundingClientRect().top + window.scrollY;
+  // 重排后至少排到当前视口下方一点，再放开旧高度
+  const fillTo = keepHeight && !mobile
+    ? Math.max(0, window.scrollY + window.innerHeight - wallTop + 400)
+    : 0;
+
+  wall.innerHTML = '';
+  wall.style.width = '';
+  totalCountEl.textContent = data.length;
+  updateFooter(data);
+
+  if (data.length === 0) {
+    wallState = null;
+    wall.style.height = 'auto';
+    wall.innerHTML = '<div class="empty-state">没有找到相关便利贴</div>';
+    return;
+  }
+
+  const gap = 8;
+  const wallWidth = wall.clientWidth || Math.min(1100, window.innerWidth - 40);
+  const cols = mobile ? 1 : Math.max(4, Math.min(8, Math.round(wallWidth / 140)));
+  const colW = mobile ? wallWidth : (wallWidth - gap * (cols - 1)) / cols;
+
+  wallState = {
+    data,
+    mobile,
+    cols,
+    colW,
+    gap,
+    wallWidth,
+    occupied: Array.from({ length: cols }, () => []),
+    next: 0,
+    maxBottom: 0,
+    maxRight: 0,
+    loading: false,
+    done: false,
+    holdHeight: prevHeight,
+    fillTo,
+    batchSize: mobile ? BATCH_SIZE_MOBILE : BATCH_SIZE_DESKTOP,
+    preserveOrder: currentPreserveOrder
+  };
+
+  if (mobile) {
+    wall.style.height = 'auto';
+  } else {
+    wall.style.height = prevHeight > 0 ? `${prevHeight}px` : '0px';
+  }
+
+  appendBatch(wallState);
+  maybeLoadMore();
 }
 
 function openModal(note) {
@@ -1368,15 +1591,29 @@ searchInput.addEventListener('keydown', (e) => {
     String(n.content || '').toLowerCase().includes(keyword) ||
     String(n.author || '').toLowerCase().includes(keyword)
   );
-  renderWall(filtered);
+  // 搜索结果保持原顺序，不按高度重排
+  renderWall(filtered, { preserveOrder: true });
 });
 
-// 窗口大小变化时重新排列，保留当前搜索结果
+// 窗口大小变化时重新排列，保留当前搜索结果和滚动位置
 let resizeTimer;
 window.addEventListener('resize', () => {
   clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(() => renderWall(currentNotes), 200);
+  resizeTimer = setTimeout(() => renderWall(currentNotes, {
+    keepHeight: true,
+    preserveOrder: currentPreserveOrder
+  }), 200);
 });
+
+// 滚动到接近底部时继续加载下一批，避免几千条划线一次性生成
+let scrollTimer = 0;
+window.addEventListener('scroll', () => {
+  if (scrollTimer) return;
+  scrollTimer = setTimeout(() => {
+    scrollTimer = 0;
+    maybeLoadMore();
+  }, 50);
+}, { passive: true });
 
 renderWall(notes);
 

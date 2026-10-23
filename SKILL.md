@@ -59,7 +59,6 @@ weread-bookshelf/
 └── data/                     # 个人数据（git 忽略）
     ├── weread-data.js        # 运行时数据
     ├── covers/               # 本地封面
-    ├── note-heights.json     # 可选：个别便利贴固定高度
     └── title_mapping.json    # 可选：拼音书名映射
 ```
 
@@ -345,22 +344,7 @@ window.WEREAD_DATA = { ... };
 - 不要把 key 写进这个文件。
 - 写入成功后，再按第 6 步的 `usedCoverFiles` 清理 `data/covers/` 中的孤儿封面；写入失败时不要清理。
 
-笔记可以带一个可选的 `height`：
-
-```json
-{"createTime": 1788428054, "height": 250}
-```
-
-如果存在 `data/note-heights.json`，按 `createTime` 把高度附加到对应笔记：
-
-```json
-{
-  "1788428054": 250,
-  "1788006429": 180
-}
-```
-
-没有这个文件就不加 `height`，便利贴按内容自适应。
+便利贴高度一律由内容自适应，不要为单条笔记写死高度。
 
 ### 8. 打开页面
 
@@ -391,7 +375,6 @@ macOS / Linux 用 `open` 或 `xdg-open`。
 |------|------|------|
 | `data/weread-data.js` | JS | 页面唯一运行时数据，顶层是 `window.WEREAD_DATA` |
 | `data/covers/` | 图片 | 本地封面，路径相对于 skill 根目录 |
-| `data/note-heights.json` | 对象 | 可选，`createTime → 高度` |
 | `data/title_mapping.json` | 对象 | 可选，拼音书名 → 中文书名 |
 
 旧的 `data/shelf.json`、`notes.json`、`chapter_progress.json`、`heatmap.json`、`preferences.json`、`recommend.json`、`covers_base64.json` **不再使用**。更新时直接写 `data/weread-data.js`，不要生成这些中间文件。
