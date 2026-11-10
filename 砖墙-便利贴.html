@@ -30,33 +30,6 @@
   }
 
   /* ===== 顶部工具条 ===== */
-  .back-home {
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    z-index: 1001;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 16px;
-    background: rgba(255,255,255,0.72);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(120,90,60,0.18);
-    border-radius: 20px;
-    color: #5b4636;
-    text-decoration: none;
-    font-size: 13px;
-    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
-    box-shadow: 0 4px 14px rgba(90,60,30,0.08);
-    transition: background .2s, transform .2s, box-shadow .2s;
-  }
-  .back-home:hover {
-    background: rgba(255,255,255,0.94);
-    transform: translateX(-3px);
-    box-shadow: 0 6px 18px rgba(90,60,30,0.12);
-  }
-  .back-arrow { font-size: 16px; font-weight: bold; }
-
   .theme-switch {
     position: fixed;
     top: 20px;
@@ -121,40 +94,43 @@
     font-size: 14px;
   }
 
-  .search-box {
+  .type-switch {
     position: relative;
     z-index: 10;
-    max-width: 420px;
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    width: fit-content;
     margin: 16px auto 18px;
-    padding: 0 20px;
-  }
-  .search-box .icon {
-    position: absolute;
-    left: 36px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #9a8575;
-    font-size: 15px;
-    pointer-events: none;
-  }
-  .search-box input {
-    width: 100%;
-    height: 44px;
-    border: 1px solid rgba(120,90,60,0.12);
+    padding: 4px;
     border-radius: 22px;
-    padding: 0 20px 0 44px;
-    font-size: 14px;
-    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
-    background: rgba(255,255,255,0.88);
+    background: rgba(255,255,255,0.72);
     box-shadow: 0 6px 20px rgba(90,60,30,0.08);
-    outline: none;
-    color: #4a3b2e;
-    transition: border-color .2s, box-shadow .2s;
   }
-  .search-box input::placeholder { color: #b0a094; }
-  .search-box input:focus {
-    border-color: rgba(180,100,58,0.35);
-    box-shadow: 0 6px 24px rgba(90,60,30,0.12);
+  .type-switch button {
+    border: 0;
+    border-radius: 18px;
+    padding: 8px 20px;
+    background: transparent;
+    color: #8a7462;
+    font-size: 13px;
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: background .2s, color .2s;
+  }
+  .type-switch button span {
+    margin-left: 4px;
+    font-size: 11px;
+    opacity: 0.72;
+  }
+  .type-switch button.active {
+    background: #b4643a;
+    color: #fff8ee;
+  }
+  .type-switch button:not(.active):hover {
+    background: rgba(180,100,58,0.08);
+    color: #6b4f3a;
   }
 
   /* ===== 墙 ===== */
@@ -517,6 +493,10 @@
     top: 8px;
     right: 10px;
     z-index: 2;
+    max-width: calc(100% - 20px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
     font-size: 9px;
     font-weight: 600;
@@ -815,6 +795,29 @@
     text-align: right;
   }
 
+  .modal-abstract-wrap {
+    margin: 0 0 18px;
+    padding: 12px 16px 12px 18px;
+    background: rgba(180,100,58,0.07);
+    border-left: 3px solid rgba(180,100,58,0.45);
+    border-radius: 2px;
+  }
+  .modal-abstract-label {
+    margin-bottom: 6px;
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: #a07c5f;
+  }
+  .modal-abstract-text {
+    margin: 0;
+    font-size: 14.5px;
+    line-height: 1.9;
+    color: #7a6452;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
   .modal-content {
     font-size: 17px;
     line-height: 2;
@@ -860,18 +863,12 @@
   /* ===== 响应式 ===== */
   @media (max-width: 768px) {
     body { padding-bottom: 24px; }
-    .back-home {
-      top: 12px;
-      left: 12px;
-      padding: 7px 12px;
-      font-size: 12px;
-    }
     .theme-switch { top: 12px; right: 12px; padding: 3px; }
     .theme-switch button { font-size: 11px; padding: 5px 10px; }
     .header { padding: 64px 16px 4px; }
     .header h1 { font-size: 28px; letter-spacing: 3px; }
     .header p { font-size: 11px; }
-    .search-box { margin: 14px auto 20px; padding: 0 16px; }
+    .type-switch { margin: 14px auto 18px; }
     .pet-track { top: max(250px, 30%); }
     .wall { max-width: none; min-height: auto; padding: 8px 16px 30px; }
     .note {
@@ -891,17 +888,10 @@
     .modal-cover { width: 60px; }
     .modal-book { font-size: 18px; }
     .modal-content { font-size: 16px; line-height: 1.9; }
-    .back-text { display: none; }
-    .back-home { padding: 8px 11px; }
   }
 </style>
 </head>
 <body class="theme-saturated">
-
-<a href="我的书架-浅色版.html" class="back-home" title="返回书架">
-  <span class="back-arrow">←</span>
-  <span class="back-text">返回书架</span>
-</a>
 
 <div class="theme-switch" id="themeSwitch" role="group" aria-label="配色主题">
   <button type="button" data-theme="morandi">莫兰迪</button>
@@ -909,14 +899,14 @@
 </div>
 
 <div class="header">
-  <h1>墙<span> · </span>句子便利贴</h1>
-  <p>Words Pinned on the Wall</p>
+  <h1 id="wallTitle">墙<span> · </span>句子便利贴</h1>
+  <p id="wallSubtitle">Words Pinned on the Wall</p>
   <div class="stats"><b id="totalCount">0</b> 张便利贴 · 点击查看详情</div>
 </div>
 
-<div class="search-box">
-  <span class="icon">🔍</span>
-  <input type="text" id="searchInput" placeholder="搜索书名、作者或句子…" autocomplete="off">
+<div class="type-switch" id="typeSwitch" role="group" aria-label="内容类型">
+  <button type="button" data-type="bookmark" class="active">划线 <span id="typeBookmarkCount">0</span></button>
+  <button type="button" data-type="thought">想法 <span id="typeThoughtCount">0</span></button>
 </div>
 
 <div class="wall" id="wall"></div>
@@ -964,33 +954,31 @@
         </div>
       </div>
     </div>
+    <div class="modal-abstract-wrap" id="modalAbstractWrap" style="display:none;">
+      <div class="modal-abstract-label">划线原句</div>
+      <blockquote class="modal-abstract-text" id="modalAbstract"></blockquote>
+    </div>
     <div class="modal-content" id="modalContent"></div>
   </div>
 </div>
 
 <div id="dataMissing" style="display:flex;position:fixed;inset:0;z-index:99999;background:rgba(240,237,232,.97);align-items:center;justify-content:center;padding:24px;text-align:center;">
   <div style="max-width:460px;font-family:var(--serif);">
-    <h2 style="font-size:24px;margin-bottom:12px;color:#4a4540;">还没有便利贴数据</h2>
-    <p style="line-height:1.9;color:#6b5f52;">请在 agent 中输入「打开书架」获取最新数据。<br>首次使用需要先配置 <code>WEREAD_API_KEY</code>。</p>
+    <h2 id="dataMissingTitle" style="font-size:24px;margin-bottom:12px;color:#4a4540;">正在加载便利贴…</h2>
+    <p id="dataMissingText" style="line-height:1.9;color:#6b5f52;">正在读取这本书的数据，请稍候。</p>
   </div>
 </div>
 
-<script src="data/weread-data.js"></script>
 <script>
-const DATA = window.WEREAD_DATA || {};
-const bookCovers = DATA.covers || {};
-const bookChapterProgress = DATA.chapterProgress || {};
-const notes = Array.isArray(DATA.notes) ? DATA.notes : [];
-if (window.WEREAD_DATA && Array.isArray(DATA.notes)) {
-  document.getElementById('dataMissing').style.display = 'none';
-}
+let DATA = null;
+let allNotes = [];
+let activeType = 'bookmark';
 
 const wall = document.getElementById('wall');
 const totalCountEl = document.getElementById('totalCount');
 const footerStats = document.getElementById('footerStats');
-const searchInput = document.getElementById('searchInput');
 
-let currentNotes = notes;
+let currentNotes = [];
 
 function escapeHtml(text) {
   const div = document.createElement('div');
@@ -1009,6 +997,19 @@ function bookName(title) {
 function truncate(text, max) {
   const s = String(text == null ? '' : text).replace(/\s+/g, ' ').trim();
   return s.length > max ? s.slice(0, max - 1) + '…' : s;
+}
+
+function chapterLabel(note) {
+  const chapters = (DATA && DATA.chapters) || {};
+  const raw = String(chapters[note.chapterUid] || note.chapterName || '').replace(/\s+/g, ' ').trim();
+  if (!raw) return '未分章';
+  if (/^[0-9]+$/.test(raw)) return `第${raw}章`;
+  if (/^[一二三四五六七八九十百千零两]+$/.test(raw)) return `第${raw}章`;
+  const numbered = raw.match(/^第[0-9一二三四五六七八九十百千零两]+(?:部分|[章节回卷篇讲])/);
+  if (numbered) return numbered[0];
+  const english = raw.match(/^Chapter\s+[0-9]+/i);
+  if (english) return english[0];
+  return truncate(raw, 10);
 }
 
 function formatDate(ts) {
@@ -1093,7 +1094,7 @@ function pinHtml(pins) {
 function renderVariant(note, variant) {
   const content = note.content == null ? '' : String(note.content);
   const isThought = note.type === 'thought';
-  const title = isThought ? '想法' : bookName(note.title);
+  const title = isThought ? chapterLabel(note) : bookName(note.title);
 
   switch (variant.kind) {
     case 'frame':
@@ -1118,7 +1119,7 @@ function renderVariant(note, variant) {
 
     case 'grid':
       return `${pinHtml(variant.pins)}${variant.tape ? `<div class="tape ${variant.tape}"></div>` : ''}` +
-        `<span class="title">${isThought ? '想法' : '摘抄'}</span>` +
+        `<span class="title">${escapeHtml(isThought ? chapterLabel(note) : '摘抄')}</span>` +
         `<div class="note-text">${escapeHtml(content)}</div>`;
 
     default:
@@ -1128,11 +1129,15 @@ function renderVariant(note, variant) {
   }
 }
 
-function updateFooter(data) {
-  const bookmarkCount = data.filter((n) => n.type !== 'thought').length;
-  const thoughtCount = data.length - bookmarkCount;
-  const bookCount = new Set(data.map((n) => n.title)).size;
-  footerStats.textContent = `${bookmarkCount} 条划线 · ${thoughtCount} 条想法 · 来自 ${bookCount} 本书`;
+function updateFooter() {
+  const bookmarkCount = allNotes.filter((n) => n.type !== 'thought').length;
+  const thoughtCount = allNotes.length - bookmarkCount;
+  let text = `${bookmarkCount} 条划线 · ${thoughtCount} 条想法`;
+  if (DATA && DATA.truncated) {
+    const total = Number(DATA.totalNotes) || allNotes.length;
+    text += ` · 原书共 ${total} 条，单本仅展示 ${allNotes.length} 条`;
+  }
+  footerStats.textContent = text;
 }
 
 // ===== 便利贴墙排版 =====
@@ -1345,7 +1350,7 @@ function finalizeLayout(state) {
     state.holdHeight = 0;
     wall.style.height = `${state.maxBottom + 40}px`;
   }
-  // 搜索结果较少时收窄墙宽并居中，左右两边仍然对齐
+  // 数据较少时收窄墙宽并居中，左右两边仍然对齐
   if (state.maxRight > 0 && state.maxRight < state.wallWidth - 1) {
     wall.style.width = `${state.maxRight}px`;
   }
@@ -1377,7 +1382,7 @@ function appendBatch(state) {
     }
 
     const badge = note.type === 'thought' && variant.kind !== 'standard' && variant.kind !== 'grid'
-      ? '<span class="thought-badge">想法</span>'
+      ? `<span class="thought-badge">${escapeHtml(chapterLabel(note))}</span>`
       : '';
 
     el.innerHTML = badge + renderVariant(note, variant);
@@ -1466,12 +1471,15 @@ function renderWall(data, options) {
   wall.innerHTML = '';
   wall.style.width = '';
   totalCountEl.textContent = data.length;
-  updateFooter(data);
+  updateFooter();
 
   if (data.length === 0) {
     wallState = null;
     wall.style.height = 'auto';
-    wall.innerHTML = '<div class="empty-state">没有找到相关便利贴</div>';
+    const otherType = activeType === 'thought' ? 'bookmark' : 'thought';
+    const otherLabel = otherType === 'thought' ? '想法' : '划线';
+    const hasOther = allNotes.some((n) => (otherType === 'thought' ? n.type === 'thought' : n.type !== 'thought'));
+    wall.innerHTML = `<div class="empty-state">这本书还没有${activeType === 'thought' ? '想法' : '划线'}${hasOther ? `，切换到「${otherLabel}」看看` : ''}</div>`;
     return;
   }
 
@@ -1512,19 +1520,30 @@ function renderWall(data, options) {
 function openModal(note) {
   const overlay = document.getElementById('modalOverlay');
   const isThought = note.type === 'thought';
-  const bookData = bookChapterProgress[note.bookId];
-  const title = note.title == null ? '' : String(note.title);
+  const book = (DATA && DATA.book) || {};
+  const chapters = (DATA && DATA.chapters) || {};
+  const title = note.title == null ? String(book.title || '') : String(note.title);
 
   document.getElementById('modalType').textContent = isThought ? '想法' : '划线';
   document.getElementById('modalContent').textContent = note.content == null ? '' : String(note.content);
   document.getElementById('modalBook').textContent = bookName(title);
-  document.getElementById('modalAuthor').textContent = note.author || '佚名';
+  document.getElementById('modalAuthor').textContent = note.author || book.author || '佚名';
   document.getElementById('modalDate').textContent = formatDate(note.createTime) || '—';
   document.getElementById('modalDateLabel').textContent = isThought ? '写想法日期' : '划线日期';
 
+  const abstractWrap = document.getElementById('modalAbstractWrap');
+  const abstract = note.abstract == null ? '' : String(note.abstract).trim();
+  if (isThought && abstract) {
+    document.getElementById('modalAbstract').textContent = abstract;
+    abstractWrap.style.display = 'block';
+  } else {
+    document.getElementById('modalAbstract').textContent = '';
+    abstractWrap.style.display = 'none';
+  }
+
   const chapterEl = document.getElementById('modalChapter');
-  if (bookData && bookData.chapters && bookData.chapters[note.chapterUid]) {
-    let chapterTitle = String(bookData.chapters[note.chapterUid]);
+  if (chapters[note.chapterUid]) {
+    let chapterTitle = String(chapters[note.chapterUid]);
     const cnNums = '一二三四五六七八九十百千零';
     if (/^[0-9]+$/.test(chapterTitle)) {
       chapterTitle = `第${chapterTitle}章`;
@@ -1537,22 +1556,13 @@ function openModal(note) {
     chapterEl.style.display = 'none';
   }
 
-  const progress = bookData ? Math.max(0, Math.min(100, Number(bookData.progress) || 0)) : 0;
+  const progress = Math.max(0, Math.min(100, Number(book.progress) || 0));
   document.getElementById('modalProgressFill').style.width = `${progress}%`;
   document.getElementById('modalProgressText').textContent = `${progress}%`;
 
   const coverImg = document.getElementById('modalCoverImg');
   const coverDiv = document.getElementById('modalCover');
-  let coverUrl = bookCovers[title];
-  if (!coverUrl && title) {
-    for (const key in bookCovers) {
-      const cleanKey = key.replace(/[《》]/g, '');
-      if (key.includes(title) || title.includes(cleanKey)) {
-        coverUrl = bookCovers[key];
-        break;
-      }
-    }
-  }
+  const coverUrl = book.cover || '';
   if (coverUrl) {
     coverImg.src = coverUrl;
     coverDiv.style.display = 'block';
@@ -1578,24 +1588,34 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') closeModal();
 });
 
-// 搜索：书名 / 作者 / 句子，回车触发
-searchInput.addEventListener('keydown', (e) => {
-  if (e.key !== 'Enter' || e.isComposing) return;
-  const keyword = e.target.value.trim().toLowerCase();
-  if (!keyword) {
-    renderWall(notes);
-    return;
-  }
-  const filtered = notes.filter((n) =>
-    String(n.title || '').toLowerCase().includes(keyword) ||
-    String(n.content || '').toLowerCase().includes(keyword) ||
-    String(n.author || '').toLowerCase().includes(keyword)
-  );
-  // 搜索结果保持原顺序，不按高度重排
-  renderWall(filtered, { preserveOrder: true });
+// 划线 / 想法切换
+function notesForType(type) {
+  return allNotes.filter((n) => (type === 'thought' ? n.type === 'thought' : n.type !== 'thought'));
+}
+
+function updateTypeCounts() {
+  const bookmarkCount = allNotes.filter((n) => n.type !== 'thought').length;
+  const thoughtCount = allNotes.length - bookmarkCount;
+  const bEl = document.getElementById('typeBookmarkCount');
+  const tEl = document.getElementById('typeThoughtCount');
+  if (bEl) bEl.textContent = String(bookmarkCount);
+  if (tEl) tEl.textContent = String(thoughtCount);
+}
+
+function setType(type) {
+  activeType = type === 'thought' ? 'thought' : 'bookmark';
+  document.querySelectorAll('#typeSwitch button').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.type === activeType);
+  });
+  renderWall(notesForType(activeType));
+}
+
+document.getElementById('typeSwitch').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-type]');
+  if (btn) setType(btn.dataset.type);
 });
 
-// 窗口大小变化时重新排列，保留当前搜索结果和滚动位置
+// 窗口大小变化时重新排列，保留当前笔记和滚动位置
 let resizeTimer;
 window.addEventListener('resize', () => {
   clearTimeout(resizeTimer);
@@ -1615,15 +1635,83 @@ window.addEventListener('scroll', () => {
   }, 50);
 }, { passive: true });
 
-renderWall(notes);
+function showDataMissing(title, message) {
+  const overlay = document.getElementById('dataMissing');
+  const titleEl = document.getElementById('dataMissingTitle');
+  const textEl = document.getElementById('dataMissingText');
+  if (titleEl) titleEl.textContent = title;
+  if (textEl) textEl.textContent = message;
+  if (overlay) overlay.style.display = 'flex';
+}
 
-const updatedEl = document.getElementById('dataUpdatedAt');
-if (updatedEl && DATA.generatedAt) {
+function updateUpdatedAt() {
+  const updatedEl = document.getElementById('dataUpdatedAt');
+  if (!updatedEl || !DATA || !DATA.generatedAt) return;
   const updatedDate = new Date(DATA.generatedAt);
-  if (!Number.isNaN(updatedDate.getTime())) {
-    updatedEl.textContent = `数据更新于 ${updatedDate.toLocaleString('zh-CN', { hour12: false })}`;
+  if (Number.isNaN(updatedDate.getTime())) return;
+  updatedEl.textContent = `数据更新于 ${updatedDate.toLocaleString('zh-CN', { hour12: false })}`;
+}
+
+function applyBookMeta() {
+  const book = (DATA && DATA.book) || {};
+  const title = String(book.title || '').replace(/^《|》$/g, '');
+  if (title) {
+    document.title = `《${title}》 · 便利贴墙`;
+    const h1 = document.getElementById('wallTitle');
+    if (h1) h1.innerHTML = `《${escapeHtml(title)}》<span> · </span>便利贴`;
+  }
+  const subtitle = document.getElementById('wallSubtitle');
+  if (subtitle) {
+    subtitle.textContent = book.author
+      ? `${book.author} · Words Pinned on the Wall`
+      : 'Words Pinned on the Wall';
   }
 }
+
+function getBookIdFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const bookId = params.get('bookId') || '';
+  return /^[A-Za-z0-9_-]+$/.test(bookId) ? bookId : '';
+}
+
+function loadBook() {
+  const bookId = getBookIdFromUrl();
+  if (!bookId) {
+    showDataMissing(
+      '缺少书籍参数',
+      '请对 agent 说：打开《书名》的便利贴墙。书名需要用书名号《》包起来。'
+    );
+    return;
+  }
+
+  const script = document.createElement('script');
+  script.src = `data/books/${bookId}.js?v=${Date.now()}`;
+  script.onload = () => {
+    if (!window.WEREAD_BOOK || !Array.isArray(window.WEREAD_BOOK.notes)) {
+      showDataMissing(
+        '没有读取到这本书的数据',
+        '数据文件格式不正确，请让 agent 重新更新这本书的便利贴墙。'
+      );
+      return;
+    }
+    DATA = window.WEREAD_BOOK;
+    allNotes = DATA.notes;
+    document.getElementById('dataMissing').style.display = 'none';
+    applyBookMeta();
+    updateTypeCounts();
+    updateUpdatedAt();
+    setType(allNotes.some((n) => n.type !== 'thought') ? 'bookmark' : 'thought');
+  };
+  script.onerror = () => {
+    showDataMissing(
+      '还没有这本书的便利贴数据',
+      '请对 agent 说：更新《书名》的便利贴墙。书名需要用书名号《》包起来。'
+    );
+  };
+  document.head.appendChild(script);
+}
+
+loadBook();
 </script>
 
 <script>

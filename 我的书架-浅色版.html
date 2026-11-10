@@ -204,25 +204,6 @@
       transition: width 0.35s cubic-bezier(0.6, 0, 0.2, 1);
     }
 
-    .nav-cta {
-      font-size: 13px;
-      letter-spacing: 0.12em;
-      color: var(--accent-deep);
-      text-decoration: none;
-      border: 1px solid rgba(143, 74, 38, 0.35);
-      border-radius: 99px;
-      padding: 8px 20px;
-      transition: all 0.3s;
-      background: rgba(255, 253, 248, 0.6);
-    }
-
-    .nav-cta:hover {
-      background: var(--accent);
-      color: #fff8ee;
-      border-color: var(--accent);
-      box-shadow: 0 8px 20px -8px rgba(143, 74, 38, 0.5);
-    }
-
     .page {
       position: relative;
       width: 100%;
@@ -967,16 +948,7 @@
       letter-spacing: 0.1em;
     }
 
-    /* 划线引用 */
-    .quote-mark {
-      font-family: 'Cormorant Garamond', Georgia, serif;
-      font-size: 74px;
-      line-height: 0.6;
-      color: rgba(200, 155, 90, 0.4);
-      margin: 20px 0 6px;
-      font-style: italic;
-    }
-
+    /* 最近在读 */
     .quote-text {
       font-family: 'Noto Serif SC', 'Songti SC', serif;
       font-size: 16.5px;
@@ -1007,6 +979,42 @@
       height: 318px;
       display: flex;
       flex-direction: column;
+    }
+
+    .card-quote #recentBookTitle {
+      font-size: 23px;
+      line-height: 1.55;
+      letter-spacing: 0.02em;
+      -webkit-line-clamp: 2;
+    }
+
+    .recent-book-intro {
+      flex: 1;
+      margin: 8px 0 0;
+      font-family: 'Noto Serif SC', 'Songti SC', serif;
+      font-size: 13.5px;
+      line-height: 1.85;
+      letter-spacing: 0.04em;
+      color: var(--text-secondary);
+      display: -webkit-box;
+      -webkit-line-clamp: 4;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .recent-book-intro.is-empty {
+      color: var(--text-tertiary);
+      font-style: italic;
+    }
+
+    .card-quote .quote-src {
+      text-align: left;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(90, 72, 50, 0.12);
+      font-size: 11.5px;
+      letter-spacing: 0.08em;
     }
 
     /* 阅读偏好环形图 */
@@ -1673,6 +1681,10 @@
       .stat-card {
         padding: 20px;
       }
+      .card-quote {
+        height: auto;
+        min-height: 318px;
+      }
     }
   
     /* 小猫萌宠 */
@@ -1723,7 +1735,6 @@
     <div class="nav-links">
       <a href="#shelf">书陈列</a><a href="#data">阅读数据</a><a href="#rec">猜你喜欢</a>
     </div>
-    <a class="nav-cta" href="砖墙-便利贴.html">便利贴墙</a>
   </nav>
   <div class="grain"></div>
   <div class="blob blob-1"></div>
@@ -1827,10 +1838,10 @@
         </div>
       </div>
       <div class="data-card card-quote reveal">
-        <h4>最近划线 <span class="en">Highlights</span></h4>
-        <div class="quote-mark">“</div>
-        <p class="quote-text" id="recentQuoteText">正在加载…</p>
-        <div class="quote-src" id="recentQuoteSrc"></div>
+        <h4>最近在读 <span class="en">Currently Reading</span></h4>
+        <p class="quote-text" id="recentBookTitle">正在加载…</p>
+        <p class="recent-book-intro" id="recentBookIntro"></p>
+        <div class="quote-src" id="recentBookMeta"></div>
       </div>
     </div>
   </section>
@@ -1858,12 +1869,11 @@
     </div>
   </div>
 
-  <script src="data/weread-data.js"></script>
+  <script src="data/shelf.js"></script>
   <script>
-    const DATA = window.WEREAD_DATA || {};
+    const DATA = window.WEREAD_SHELF || {};
     const books = Array.isArray(DATA.books) ? DATA.books : [];
-    const notes = Array.isArray(DATA.notes) ? DATA.notes : [];
-    if (window.WEREAD_DATA && Array.isArray(DATA.books)) {
+    if (window.WEREAD_SHELF && Array.isArray(DATA.books)) {
       document.getElementById('dataMissing').style.display = 'none';
     }
 
@@ -2439,15 +2449,16 @@
       }
     }
 
-    function renderRecentQuote() {
+    function renderRecentBook() {
       const card = document.querySelector('.card-quote');
-      const textEl = document.getElementById('recentQuoteText');
-      const srcEl = document.getElementById('recentQuoteSrc');
+      const textEl = document.getElementById('recentBookTitle');
+      const introEl = document.getElementById('recentBookIntro');
+      const srcEl = document.getElementById('recentBookMeta');
       if (!card || !textEl || !srcEl) return;
 
-      const latest = notes
-        .filter((note) => note && note.type === 'bookmark' && note.content)
-        .sort((a, b) => (Number(b.createTime) || 0) - (Number(a.createTime) || 0))[0];
+      const latest = [...books]
+        .filter((book) => book && book.title)
+        .sort((a, b) => (Number(b.readUpdateTime) || 0) - (Number(a.readUpdateTime) || 0))[0];
 
       if (!latest) {
         card.style.display = 'none';
@@ -2455,8 +2466,27 @@
       }
 
       const title = String(latest.title || '').replace(/^《|》$/g, '');
-      textEl.textContent = latest.content;
-      srcEl.innerHTML = `—— 划自 <b>${escapeHtmlText(`《${title}》`)}</b> · ${escapeHtmlText(formatNoteDate(latest.createTime))}`;
+      textEl.textContent = `《${title}》`;
+
+      if (introEl) {
+        const intro = String(latest.intro || '').replace(/\s+/g, ' ').trim();
+        introEl.textContent = intro || '这本书暂时没有简介。';
+        introEl.classList.toggle('is-empty', !intro);
+        if (intro) {
+          introEl.title = intro;
+        } else {
+          introEl.removeAttribute('title');
+        }
+      }
+
+      const meta = [];
+      if (latest.author) meta.push(latest.author);
+      if (latest.readUpdateTime) meta.push(`最近阅读 ${formatNoteDate(latest.readUpdateTime)}`);
+      const progress = Number(latest.progress);
+      if (Number.isFinite(progress) && progress > 0) {
+        meta.push(`进度 ${Math.min(100, Math.round(progress))}%`);
+      }
+      srcEl.textContent = meta.join(' · ');
     }
 
     function renderDataUpdatedAt() {
@@ -2468,7 +2498,7 @@
     }
 
     renderHeaderStats();
-    renderRecentQuote();
+    renderRecentBook();
     renderDataUpdatedAt();
     if (books.length > 0) init();
 
