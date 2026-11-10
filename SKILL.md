@@ -1,7 +1,7 @@
 ---
 name: weread-bookshelf
 description: 打开或更新微信读书书架首页；按书名打开单本书的便利贴墙。更新书架只拉首页数据，不拉划线句子和想法；单本便利贴按需拉取并写入独立数据文件。不需要 Node.js、PowerShell 或额外的微信读书技能。
-version: 3.0.0
+version: 3.1.0
 ---
 
 # WeRead Bookshelf — 微信读书书架可视化
