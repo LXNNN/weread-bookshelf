@@ -1051,15 +1051,7 @@ const NOTE_VARIANTS = [
   { kind: 'standard', cls: 'note-cream note-sm' }
 ];
 
-const THOUGHT_VARIANTS = [
-  { kind: 'standard', cls: 'note-yellow-bright note-tiny', pins: ['pin-gold'] },
-  { kind: 'standard', cls: 'note-red note-sm', pins: ['pin-white'] },
-  { kind: 'standard', cls: 'note-white note-sm', pins: ['pin-white pin-left', 'pin-white pin-right'] },
-  { kind: 'standard', cls: 'note-purple-deep note-sm', pins: ['pin-gold'] },
-  { kind: 'standard', cls: 'note-orange-deep note-sm', pins: ['pin-white'] },
-  { kind: 'standard', cls: 'note-yellow-bright note-tall', pins: ['pin-white'] }
-];
-
+// 划线和想法共用同一套便利贴款式，数据不同但视觉和排版规则一致。
 // 黄色/橙色只在一半的循环中出现，另一半换成图片里的五种便利贴颜色
 const ALT_COLORS = [
   'note-mint',
@@ -1075,7 +1067,7 @@ function isYellowOrangeVariant(variant) {
 }
 
 function pickVariant(note, index) {
-  const pool = note.type === 'thought' ? THOUGHT_VARIANTS : NOTE_VARIANTS;
+  const pool = NOTE_VARIANTS;
   const variant = pool[index % pool.length];
   const cycle = Math.floor(index / pool.length);
   if (cycle % 2 === 0 || !isYellowOrangeVariant(variant)) return variant;
