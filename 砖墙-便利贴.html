@@ -137,7 +137,7 @@
   .wall {
     position: relative;
     z-index: 5;
-    max-width: 1100px;
+    max-width: 1100px; /* 8 列：8×130.5 + 7×8 = 1100 */
     margin: 0 auto;
     min-height: 200px;
     padding: 10px 0 30px;
@@ -861,6 +861,11 @@
   body.theme-morandi .note-vrect-pinned .color-bar { background: #c9a57a; }
 
   /* ===== 响应式 ===== */
+  /* 1920 大屏：10 列，便利贴宽度与 8 列时一致（130.5px） */
+  @media (min-width: 1800px) {
+    .wall { max-width: 1377px; /* 10 列：10×130.5 + 9×8 = 1377 */ }
+  }
+
   @media (max-width: 768px) {
     body { padding-bottom: 24px; }
     .theme-switch { top: 12px; right: 12px; padding: 3px; }
@@ -1484,8 +1489,9 @@ function renderWall(data, options) {
   }
 
   const gap = 8;
-  const wallWidth = wall.clientWidth || Math.min(1100, window.innerWidth - 40);
-  const cols = mobile ? 1 : Math.max(4, Math.min(8, Math.round(wallWidth / 140)));
+  const maxWallWidth = window.innerWidth >= 1800 ? 1377 : 1100;
+  const wallWidth = wall.clientWidth || Math.min(maxWallWidth, window.innerWidth - 40);
+  const cols = mobile ? 1 : Math.max(4, Math.min(10, Math.round(wallWidth / 140)));
   const colW = mobile ? wallWidth : (wallWidth - gap * (cols - 1)) / cols;
 
   wallState = {
