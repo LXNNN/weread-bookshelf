@@ -450,9 +450,6 @@
     -webkit-line-clamp: 7;
     overflow: hidden;
   }
-  .note-vrect-pinned .vrect-book {
-    font-weight: bold;
-  }
 
   /* ===== 尺寸变体 ===== */
   .note-sm { width: 140px; min-height: 80px; font-size: 12px; padding: 12px 14px; }
@@ -487,27 +484,6 @@
   .note-lg .note-text { -webkit-line-clamp: 4; }
   .note-wide .note-text { -webkit-line-clamp: 2; }
   .note-tall .note-text { -webkit-line-clamp: 6; }
-
-  .thought-badge {
-    position: absolute;
-    top: 8px;
-    right: 10px;
-    z-index: 2;
-    max-width: calc(100% - 20px);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
-    font-size: 9px;
-    font-weight: 600;
-    letter-spacing: 1px;
-    padding: 2px 6px;
-    border-radius: 8px;
-    background: rgba(0,0,0,0.14);
-    color: inherit;
-    pointer-events: none;
-  }
-  .note-vbar-yellow .thought-badge { display: none; }
 
   /* ===== 图钉 ===== */
   .pin {
@@ -1004,19 +980,6 @@ function truncate(text, max) {
   return s.length > max ? s.slice(0, max - 1) + '…' : s;
 }
 
-function chapterLabel(note) {
-  const chapters = (DATA && DATA.chapters) || {};
-  const raw = String(chapters[note.chapterUid] || note.chapterName || '').replace(/\s+/g, ' ').trim();
-  if (!raw) return '未分章';
-  if (/^[0-9]+$/.test(raw)) return `第${raw}章`;
-  if (/^[一二三四五六七八九十百千零两]+$/.test(raw)) return `第${raw}章`;
-  const numbered = raw.match(/^第[0-9一二三四五六七八九十百千零两]+(?:部分|[章节回卷篇讲])/);
-  if (numbered) return numbered[0];
-  const english = raw.match(/^Chapter\s+[0-9]+/i);
-  if (english) return english[0];
-  return truncate(raw, 10);
-}
-
 function formatDate(ts) {
   if (!ts) return '';
   const d = new Date(Number(ts) * 1000);
@@ -1088,10 +1051,14 @@ function pinHtml(pins) {
   return pins.map((p) => `<div class="pin ${p}"></div>`).join('');
 }
 
+function noteTitle(note, variant) {
+  if (variantSpan(variant) === 2) return bookName(note.title);
+  return note.type === 'thought' ? '想法' : '摘抄';
+}
+
 function renderVariant(note, variant) {
   const content = note.content == null ? '' : String(note.content);
-  const isThought = note.type === 'thought';
-  const title = isThought ? chapterLabel(note) : bookName(note.title);
+  const title = noteTitle(note, variant);
 
   switch (variant.kind) {
     case 'frame':
@@ -1112,11 +1079,11 @@ function renderVariant(note, variant) {
     case 'vrectPinned':
       return `<div class="top-pin-gold"></div>` +
         `<div class="color-bar"></div>` +
-        `<div class="vrect-content"><span class="vrect-book">${escapeHtml(bookName(note.title))}</span><br>${escapeHtml(truncate(content, 70))}</div>`;
+        `<div class="vrect-content">${escapeHtml(truncate(content, 70))}</div>`;
 
     case 'grid':
       return `${pinHtml(variant.pins)}${variant.tape ? `<div class="tape ${variant.tape}"></div>` : ''}` +
-        `<span class="title">${escapeHtml(isThought ? chapterLabel(note) : '摘抄')}</span>` +
+        `<span class="title">${escapeHtml(title)}</span>` +
         `<div class="note-text">${escapeHtml(content)}</div>`;
 
     default:
@@ -1378,11 +1345,7 @@ function appendBatch(state) {
       el.style.width = `${span * state.colW + (span - 1) * state.gap}px`;
     }
 
-    const badge = note.type === 'thought' && variant.kind !== 'standard' && variant.kind !== 'grid'
-      ? `<span class="thought-badge">${escapeHtml(chapterLabel(note))}</span>`
-      : '';
-
-    el.innerHTML = badge + renderVariant(note, variant);
+    el.innerHTML = renderVariant(note, variant);
     el.addEventListener('click', () => openModal(note));
     fragment.appendChild(el);
     items.push({ el, span });
