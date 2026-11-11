@@ -30,6 +30,33 @@
   }
 
   /* ===== 顶部工具条 ===== */
+  .back-home {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1001;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(120,90,60,0.18);
+    border-radius: 20px;
+    color: #5b4636;
+    text-decoration: none;
+    font-size: 13px;
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    box-shadow: 0 4px 14px rgba(90,60,30,0.08);
+    transition: background .2s, transform .2s, box-shadow .2s;
+  }
+  .back-home:hover {
+    background: rgba(255,255,255,0.94);
+    transform: translateX(-3px);
+    box-shadow: 0 6px 18px rgba(90,60,30,0.12);
+  }
+  .back-arrow { font-size: 16px; font-weight: bold; }
+
   .theme-switch {
     position: fixed;
     top: 20px;
@@ -844,6 +871,8 @@
 
   @media (max-width: 768px) {
     body { padding-bottom: 24px; }
+    .back-home { top: 12px; left: 12px; padding: 7px 12px; font-size: 12px; }
+    .back-text { display: none; }
     .theme-switch { top: 12px; right: 12px; padding: 3px; }
     .theme-switch button { font-size: 11px; padding: 5px 10px; }
     .header { padding: 64px 16px 4px; }
@@ -873,6 +902,11 @@
 </style>
 </head>
 <body class="theme-saturated">
+
+<!-- <a href="我的书架-浅色版.html" class="back-home" title="返回书架" aria-label="返回书架">
+  <span class="back-arrow">←</span>
+  <span class="back-text">返回书架</span>
+</a> -->
 
 <div class="theme-switch" id="themeSwitch" role="group" aria-label="配色主题">
   <button type="button" data-theme="morandi">莫兰迪</button>
